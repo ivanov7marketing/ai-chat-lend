@@ -14,6 +14,7 @@ export default function ChatWindow() {
         messages,
         currentFunnelStep,
         isTyping,
+        availableSegments,
         sendUserMessage,
         closeChat,
     } = useChatStore()
@@ -35,6 +36,7 @@ export default function ChatWindow() {
         chatState === 'WELCOME' ? WELCOME_QUICK_BUTTONS : currentStep?.options ?? []
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !isTyping
+    const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && !isTyping
     const leadButtons = ['Telegram', 'WhatsApp', 'Email']
 
     const showTextInput =
@@ -109,6 +111,9 @@ export default function ChatWindow() {
                 )}
                 {showLeadButtons && (
                     <QuickButtons buttons={leadButtons} onSelect={sendUserMessage} />
+                )}
+                {showSegmentButtons && (
+                    <QuickButtons buttons={availableSegments} onSelect={sendUserMessage} />
                 )}
 
                 {/* Input */}

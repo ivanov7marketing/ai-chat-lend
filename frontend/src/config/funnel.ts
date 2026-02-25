@@ -46,12 +46,6 @@ export const FUNNEL_STEPS: FunnelStep[] = [
         skipIf: { stepId: 'repairType', value: 'Косметический' },
     },
     {
-        id: 'segment',
-        question: 'Какой ценовой сегмент предпочитаете?',
-        type: 'buttons',
-        options: ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'],
-    },
-    {
         id: 'ceilingHeight',
         question: 'Какая высота потолков?',
         type: 'buttons',

@@ -9,6 +9,7 @@ interface ChatStore {
     currentFunnelStep: number
     funnelAnswers: FunnelAnswers
     isTyping: boolean
+    availableSegments: string[]
     openChat: (initialQuestion?: string) => void
     closeChat: () => void
     sendUserMessage: (text: string) => void
@@ -22,6 +23,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     currentFunnelStep: 0,
     funnelAnswers: {},
     isTyping: false,
+    availableSegments: [],
 
     _addBotMessage: (text: string) => {
         set({ isTyping: true })
@@ -82,7 +84,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const updatedAnswers: FunnelAnswers = { ...funnelAnswers, [step.id]: text }
             set({ funnelAnswers: updatedAnswers })
 
-            // Найти следующий шаг с учётом пропуска
             const getNextStepIndex = (fromIndex: number, answers: FunnelAnswers): number | null => {
                 let next = fromIndex + 1
                 while (next < FUNNEL_STEPS.length) {
@@ -102,29 +103,87 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const nextIndex = getNextStepIndex(currentFunnelStep, updatedAnswers)
 
             if (nextIndex === null) {
-                // Воронка завершена
                 set({ chatState: 'CALCULATING' })
                 setTimeout(() => _addBotMessage('Считаю смету...'), 800)
                 setTimeout(() => {
                     const a = updatedAnswers
                     const area = parseFloat(a.area || '50')
-                    const segmentRates: Record<string, [number, number]> = {
-                        'Эконом': [25000, 35000],
-                        'Стандарт': [35000, 50000],
-                        'Комфорт': [50000, 75000],
-                        'Премиум': [75000, 120000],
+                    const rooms = a.rooms || '?'
+                    const repairType = a.repairType || 'Капитальный'
+                    const design = a.design || 'Нет'
+
+                    // Определяем сегменты и ставки (руб/м²)
+                    type RateMap = Record<string, [number, number | null]>
+                    let segments: string[]
+                    let rates: RateMap
+
+                    if (repairType === 'Косметический') {
+                        segments = ['Эконом', 'Стандарт']
+                        rates = {
+                            'Эконом': [5000, 8000],
+                            'Стандарт': [8000, 13000],
+                        }
+                    } else if (design === 'Нет') {
+                        segments = ['Эконом', 'Стандарт']
+                        rates = {
+                            'Эконом': [17000, 25000],
+                            'Стандарт': [25000, 35000],
+                        }
+                    } else if (design === 'Да, базовый') {
+                        segments = ['Стандарт', 'Комфорт']
+                        rates = {
+                            'Стандарт': [25000, 35000],
+                            'Комфорт': [35000, 50000],
+                        }
+                    } else {
+                        segments = ['Стандарт', 'Комфорт', 'Премиум']
+                        rates = {
+                            'Стандарт': [25000, 35000],
+                            'Комфорт': [35000, 50000],
+                            'Премиум': [50000, null],
+                        }
                     }
-                    const [rMin, rMax] = segmentRates[a.segment || 'Стандарт'] || [35000, 50000]
-                    const min = (area * rMin).toLocaleString('ru-RU')
-                    const max = (area * rMax).toLocaleString('ru-RU')
-                    const resultText = `✅ Готово! Предварительная оценка:\n\n📋 Квартира ${a.rooms || '?'}-комн., ${a.area} м², ${a.segment || 'Стандарт'} класс\n\n💰 Стоимость ремонта: от ${min} до ${max} руб.\n\nЭто предварительная оценка. Для точной сметы нужен замер.\n\n📄 Хотите получить детальную смету в PDF?\nКуда отправить?`
-                    set({ chatState: 'LEAD_CAPTURE' })
+
+                    set({ availableSegments: segments })
+
+                    const fmt = (n: number) =>
+                        Math.round((n * area) / 1000).toLocaleString('ru-RU') + ' тр.'
+
+                    const designLabel =
+                        design === 'Да, базовый' ? 'с базовым дизайн-проектом' :
+                            design === 'Да, полный' ? 'с полным дизайн-проектом' :
+                                'без дизайн-проекта'
+
+                    const repairLabel = repairType === 'Косметический'
+                        ? 'косметический ремонт'
+                        : 'капитальный ремонт'
+
+                    const priceLines = segments.map(seg => {
+                        const [min, max] = rates[seg]
+                        if (max === null) return `— ${seg}: от ${fmt(min)}`
+                        return `— ${seg}: ${fmt(min)} – ${fmt(max)}`
+                    }).join('\n')
+
+                    const resultText =
+                        `Смотрите, в вашем случае ${repairLabel} ${rooms}-комнатной квартиры ${a.area} м², ` +
+                        `${designLabel} будет стоить ориентировочно:\n\n${priceLines}\n\n` +
+                        `Какой вариант больше подходит? Отправлю детальную смету 👇`
+
+                    set({ chatState: 'SEGMENT_CHOICE' })
                     _addBotMessage(resultText)
                 }, 2800)
             } else {
                 set({ currentFunnelStep: nextIndex })
                 setTimeout(() => _addBotMessage(FUNNEL_STEPS[nextIndex].question), 800)
             }
+        }
+
+        if (chatState === 'SEGMENT_CHOICE') {
+            const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
+            set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE' })
+            setTimeout(() => {
+                _addBotMessage(`Отлично, готовлю смету в варианте «${text}».\n\nКуда отправить PDF?`)
+            }, 600)
         }
     },
 }))

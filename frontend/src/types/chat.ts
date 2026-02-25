@@ -23,7 +23,7 @@ export type ChatState =
   | 'WELCOME'
   | 'FUNNEL'
   | 'CALCULATING'
-  | 'RESULT'
+  | 'SEGMENT_CHOICE'
   | 'LEAD_CAPTURE'
   | 'FREE_CHAT'
 
@@ -34,8 +34,8 @@ export interface FunnelAnswers {
   repairType?: string
   replanning?: string
   design?: string
-  segment?: string
   ceilingHeight?: string
   wallMaterial?: string
   blueprint?: string
+  selectedSegment?: string
 }
