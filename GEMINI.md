@@ -40,6 +40,12 @@ AI-эксперт «Макс» ведёт пользователя через 8-
 | Аналитика    | Яндекс Метрика JS API                |
 | Деплой       | Docker Compose, VPS Timeweb Ubuntu 24.04 |
 
+## Design System
+Before writing ANY frontend code (components, styles, layouts),
+read DESIGN.md in the project root. Follow it strictly.
+Never use hardcoded hex colors or arbitrary Tailwind classes
+that are not defined in DESIGN.md.
+
 ## Структура проекта
 
 /backend         — Fastify API + WebSocket сервер
