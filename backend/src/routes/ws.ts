@@ -1,8 +1,9 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyRequest } from 'fastify'
+import { WebSocket } from 'ws'
 import { createSession, saveMessage } from '../services/sessionService'
 
 export async function wsRoutes(fastify: FastifyInstance) {
-    fastify.get('/ws', { websocket: true }, (socket, req) => {
+    fastify.get('/ws', { websocket: true }, (socket: WebSocket, req: FastifyRequest) => {
         let sessionId: string | null = null
 
         socket.on('open', async () => {
@@ -12,7 +13,7 @@ export async function wsRoutes(fastify: FastifyInstance) {
             socket.send(JSON.stringify({ type: 'session_created', sessionId }))
         })
 
-        socket.on('message', async (raw) => {
+        socket.on('message', async (raw: Buffer) => {
             try {
                 const data = JSON.parse(raw.toString())
 

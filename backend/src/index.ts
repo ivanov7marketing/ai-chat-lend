@@ -1,4 +1,4 @@
-import Fastify from 'fastify'
+import Fastify, { FastifyRequest, FastifyReply } from 'fastify'
 import cors from '@fastify/cors'
 import dotenv from 'dotenv'
 import { runMigrations } from './db/migrate'
@@ -20,8 +20,8 @@ server.register(fastifyWebsocket)
 server.register(wsRoutes)
 server.register(leadsRoutes)
 
-server.get('/health', async (request, reply) => {
-    return { status: 'ok' }
+server.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
+    return reply.send({ status: 'ok' })
 })
 
 const start = async () => {

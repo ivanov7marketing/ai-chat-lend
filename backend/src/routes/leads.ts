@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { pool } from '../db/client'
 import { sendTelegramNotification, formatLeadMessage } from '../services/telegramService'
 import { updateSessionStatus } from '../services/sessionService'
@@ -22,7 +22,7 @@ interface LeadBody {
 }
 
 export async function leadsRoutes(fastify: FastifyInstance) {
-    fastify.post<{ Body: LeadBody }>('/api/leads', async (req, reply) => {
+    fastify.post<{ Body: LeadBody }>('/api/leads', async (req: FastifyRequest<{ Body: LeadBody }>, reply: FastifyReply) => {
         const {
             sessionId,
             contactType,
