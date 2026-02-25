@@ -2,5 +2,9 @@
 pgdata/
 qdrant_data/
 node_modules/
+dist/
+frontend/node_modules/
 frontend/dist/
+backend/node_modules/
+backend/dist/
 *.log
