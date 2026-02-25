@@ -1,6 +1,9 @@
 import React from 'react';
 import HeroBlock from '../components/HeroBlock';
 import QuestionCard from '../components/QuestionCard';
+import { AnimatePresence } from 'framer-motion'
+import { useChatStore } from '../store/chatStore'
+import ChatWindow from '../components/chat/ChatWindow'
 
 const EXAMPLE_QUESTIONS = [
     "Сколько стоит ремонт двушки в 2026 году?",
@@ -12,9 +15,10 @@ const EXAMPLE_QUESTIONS = [
 ];
 
 const LandingPage: React.FC = () => {
+    const { openChat, isOpen } = useChatStore()
     return (
         <div className="bg-page flex flex-col min-h-screen">
-            <HeroBlock onStart={() => { }} />
+            <HeroBlock onStart={() => openChat()} />
 
             <section className="flex-1">
                 <div className="max-w-2xl mx-auto px-6 py-8 text-center">
@@ -24,12 +28,15 @@ const LandingPage: React.FC = () => {
                             <QuestionCard
                                 key={index}
                                 question={question}
-                                onClick={() => { }}
+                                onClick={() => openChat(question)}
                             />
                         ))}
                     </div>
                 </div>
             </section>
+            <AnimatePresence>
+                {isOpen && <ChatWindow />}
+            </AnimatePresence>
         </div>
     );
 };
