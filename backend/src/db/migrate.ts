@@ -1,7 +1,7 @@
 import { pool } from './client'
 
 export async function runMigrations() {
-    await pool.query(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS sessions (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -20,7 +20,7 @@ export async function runMigrations() {
 
     CREATE TABLE IF NOT EXISTS leads (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
+      session_id UUID,
       contact_type TEXT,
       contact_value TEXT,
       apartment_params JSONB,
@@ -29,6 +29,8 @@ export async function runMigrations() {
       selected_segment TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_session_id_fkey;
 
     CREATE TABLE IF NOT EXISTS estimates (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,5 +41,5 @@ export async function runMigrations() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `)
-    console.log('Migrations complete')
+  console.log('Migrations complete')
 }
