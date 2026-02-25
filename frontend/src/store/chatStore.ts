@@ -82,9 +82,27 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const updatedAnswers: FunnelAnswers = { ...funnelAnswers, [step.id]: text }
             set({ funnelAnswers: updatedAnswers })
 
-            const isLast = currentFunnelStep === FUNNEL_STEPS.length - 1
+            // Найти следующий шаг с учётом пропуска
+            const getNextStepIndex = (fromIndex: number, answers: FunnelAnswers): number | null => {
+                let next = fromIndex + 1
+                while (next < FUNNEL_STEPS.length) {
+                    const nextStep = FUNNEL_STEPS[next]
+                    if (nextStep.skipIf) {
+                        const { stepId, value } = nextStep.skipIf
+                        if (answers[stepId as keyof FunnelAnswers] === value) {
+                            next++
+                            continue
+                        }
+                    }
+                    return next
+                }
+                return null
+            }
 
-            if (isLast) {
+            const nextIndex = getNextStepIndex(currentFunnelStep, updatedAnswers)
+
+            if (nextIndex === null) {
+                // Воронка завершена
                 set({ chatState: 'CALCULATING' })
                 setTimeout(() => _addBotMessage('Считаю смету...'), 800)
                 setTimeout(() => {
@@ -104,9 +122,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     _addBotMessage(resultText)
                 }, 2800)
             } else {
-                const nextStep = currentFunnelStep + 1
-                set({ currentFunnelStep: nextStep })
-                setTimeout(() => _addBotMessage(FUNNEL_STEPS[nextStep].question), 800)
+                set({ currentFunnelStep: nextIndex })
+                setTimeout(() => _addBotMessage(FUNNEL_STEPS[nextIndex].question), 800)
             }
         }
     },

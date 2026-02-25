@@ -15,6 +15,7 @@ export interface FunnelStep {
   type: FunnelStepType
   options?: string[]
   placeholder?: string
+  skipIf?: { stepId: string; value: string }
 }
 
 export type ChatState =
@@ -34,5 +35,7 @@ export interface FunnelAnswers {
   replanning?: string
   design?: string
   segment?: string
+  ceilingHeight?: string
+  wallMaterial?: string
   blueprint?: string
 }
