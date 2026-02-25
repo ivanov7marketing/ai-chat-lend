@@ -38,4 +38,5 @@ export interface FunnelAnswers {
   wallMaterial?: string
   blueprint?: string
   selectedSegment?: string
+  contactChannel?: string
 }

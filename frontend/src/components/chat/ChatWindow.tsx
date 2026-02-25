@@ -13,6 +13,7 @@ export default function ChatWindow() {
         chatState,
         messages,
         currentFunnelStep,
+        funnelAnswers,
         isTyping,
         availableSegments,
         sendUserMessage,
@@ -35,12 +36,13 @@ export default function ChatWindow() {
     const currentButtons =
         chatState === 'WELCOME' ? WELCOME_QUICK_BUTTONS : currentStep?.options ?? []
 
-    const showLeadButtons = chatState === 'LEAD_CAPTURE' && !isTyping
+    const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && !isTyping
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && !isTyping
     const leadButtons = ['Telegram', 'WhatsApp', 'Email']
 
     const showTextInput =
-        chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping
+        (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
+        (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel && !isTyping)
 
     const handleSend = () => {
         if (showTextInput && inputValue.trim()) {
@@ -123,7 +125,7 @@ export default function ChatWindow() {
                             <input
                                 type="text"
                                 className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 transition-all"
-                                placeholder={currentStep?.placeholder}
+                                placeholder={chatState === 'LEAD_CAPTURE' ? 'Введите ваш Telegram / WhatsApp / Email' : currentStep?.placeholder}
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyDown={handleKeyDown}
