@@ -39,4 +39,5 @@ export interface FunnelAnswers {
   blueprint?: string
   selectedSegment?: string
   contactChannel?: string
+  phone?: string
 }

@@ -35,7 +35,8 @@ export function formatLeadMessage(data: {
 }): string {
     return (
         `🔔 <b>Новый лид!</b>\n\n` +
-        `📱 Контакт: <b>${data.contact}</b> (${data.contactType})\n` +
+        `📱 Телефон: <b>${data.contact}</b>\n` +
+        `📲 Канал: ${data.contactType}\n` +
         `🏠 Квартира: ${data.rooms}-комн., ${data.area} м²\n` +
         `🔨 Ремонт: ${data.repairType}` +
         (data.design && data.design !== 'Нет' ? `, ${data.design}` : '') + `\n` +

@@ -5,8 +5,8 @@ import { updateSessionStatus } from '../services/sessionService'
 
 interface LeadBody {
     sessionId: string
-    contactType: 'Telegram' | 'WhatsApp' | 'Email'
-    contactValue: string
+    contactType: string
+    phone: string
     apartmentParams: {
         area: string
         rooms: string
@@ -26,14 +26,14 @@ export async function leadsRoutes(fastify: FastifyInstance) {
         const {
             sessionId,
             contactType,
-            contactValue,
+            phone,
             apartmentParams,
             selectedSegment,
             estimateMin,
             estimateMax,
         } = req.body
 
-        if (!contactValue || !sessionId) {
+        if (!phone || !sessionId) {
             return reply.status(400).send({ error: 'Missing required fields' })
         }
 
@@ -46,7 +46,7 @@ export async function leadsRoutes(fastify: FastifyInstance) {
             [
                 sessionId,
                 contactType,
-                contactValue,
+                phone,
                 JSON.stringify(apartmentParams),
                 estimateMin,
                 estimateMax,
@@ -59,7 +59,7 @@ export async function leadsRoutes(fastify: FastifyInstance) {
 
         // Отправить уведомление в Telegram
         const message = formatLeadMessage({
-            contact: contactValue,
+            contact: phone,
             contactType,
             area: apartmentParams.area,
             rooms: apartmentParams.rooms,

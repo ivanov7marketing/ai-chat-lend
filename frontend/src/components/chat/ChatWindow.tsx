@@ -38,7 +38,7 @@ export default function ChatWindow() {
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && !isTyping
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && !isTyping
-    const leadButtons = ['Telegram', 'WhatsApp', 'Email']
+    const leadButtons = ['Telegram', 'MAX']
 
     const showTextInput =
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
@@ -123,9 +123,9 @@ export default function ChatWindow() {
                     {showTextInput ? (
                         <div className="flex gap-2 items-center">
                             <input
-                                type="text"
+                                type={chatState === 'LEAD_CAPTURE' ? 'tel' : 'text'}
                                 className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 transition-all"
-                                placeholder={chatState === 'LEAD_CAPTURE' ? 'Введите ваш Telegram / WhatsApp / Email' : currentStep?.placeholder}
+                                placeholder={chatState === 'LEAD_CAPTURE' ? 'Введите номер телефона' : currentStep?.placeholder}
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyDown={handleKeyDown}

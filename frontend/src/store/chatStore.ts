@@ -39,7 +39,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             await submitLeadApi({
                 sessionId: sessionId || 'anonymous',
                 contactType,
-                contactValue,
+                phone: contactValue,
                 apartmentParams: funnelAnswers,
                 selectedSegment: funnelAnswers.selectedSegment || '',
                 estimateMin,
@@ -214,7 +214,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
             set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE' })
             setTimeout(() => {
-                _addBotMessage(`Отлично, готовлю смету в варианте «${text}».\n\nКуда отправить PDF?`)
+                _addBotMessage(`Отлично! Отправлю смету в ${text}.\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
             }, 600)
         }
 
@@ -225,10 +225,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     _addBotMessage(`Укажите ваш контакт (${text}) для получения сметы:`)
                 }, 600)
             } else {
-                await get().submitLead(funnelAnswers.contactChannel, text)
+                const updatedAnswers = { ...funnelAnswers, phone: text }
+                set({ funnelAnswers: updatedAnswers })
+                await get().submitLead(funnelAnswers.contactChannel || 'Telegram', text)
                 set({ chatState: 'FREE_CHAT' })
                 setTimeout(() => _addBotMessage(
-                    'Отлично! Смета будет готова в течение нескольких минут.\n\nЕсли есть ещё вопросы по ремонту — с удовольствием отвечу 😊'
+                    'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'
                 ), 600)
             }
         }

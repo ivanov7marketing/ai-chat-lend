@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.VITE_API_URL || ''
 export async function submitLead(data: {
     sessionId: string
     contactType: string
-    contactValue: string
+    phone: string
     apartmentParams: Record<string, string | undefined>
     selectedSegment: string
     estimateMin: number
