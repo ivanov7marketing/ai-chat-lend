@@ -64,12 +64,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     openChat: (initialQuestion?: string) => {
+        const newSessionId = crypto.randomUUID()
         set({
             isOpen: true,
             chatState: 'WELCOME',
             messages: [],
             funnelAnswers: {},
             currentFunnelStep: 0,
+            sessionId: newSessionId,
         })
         get()._addBotMessage(WELCOME_MESSAGE)
         if (initialQuestion) {

@@ -44,7 +44,7 @@ export async function leadsRoutes(fastify: FastifyInstance) {
          estimate_min, estimate_max, selected_segment)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
             [
-                sessionId,
+                sessionId && sessionId !== 'anonymous' ? sessionId : null,
                 contactType,
                 phone,
                 JSON.stringify(apartmentParams),
