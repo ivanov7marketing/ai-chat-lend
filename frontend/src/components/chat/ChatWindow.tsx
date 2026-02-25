@@ -42,7 +42,7 @@ export default function ChatWindow() {
 
     const showTextInput =
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
-        (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel && !isTyping)
+        (chatState === 'LEAD_CAPTURE' && !isTyping)
 
     const handleSend = () => {
         if (showTextInput && inputValue.trim()) {

@@ -28,6 +28,7 @@ export type ChatState =
   | 'FREE_CHAT'
 
 export interface FunnelAnswers {
+  [key: string]: string | undefined
   area?: string
   rooms?: string
   condition?: string

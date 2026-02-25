@@ -219,20 +219,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
 
         if (chatState === 'LEAD_CAPTURE') {
-            if (!funnelAnswers.contactChannel) {
-                set({ funnelAnswers: { ...funnelAnswers, contactChannel: text } })
-                setTimeout(() => {
-                    _addBotMessage(`Укажите ваш контакт (${text}) для получения сметы:`)
-                }, 600)
-            } else {
-                const updatedAnswers = { ...funnelAnswers, phone: text }
-                set({ funnelAnswers: updatedAnswers })
-                await get().submitLead(funnelAnswers.contactChannel || 'Telegram', text)
-                set({ chatState: 'FREE_CHAT' })
-                setTimeout(() => _addBotMessage(
-                    'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'
-                ), 600)
-            }
+            const updatedAnswers = { ...funnelAnswers, phone: text }
+            set({ funnelAnswers: updatedAnswers })
+            await get().submitLead(funnelAnswers.contactChannel || 'Telegram', text)
+            set({ chatState: 'FREE_CHAT' })
+            setTimeout(() => _addBotMessage(
+                'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'
+            ), 600)
         }
     },
 }))
