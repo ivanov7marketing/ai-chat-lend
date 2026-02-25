@@ -42,7 +42,8 @@ export default function ChatWindow() {
 
     const showTextInput =
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
-        (chatState === 'LEAD_CAPTURE' && !isTyping)
+        (chatState === 'LEAD_CAPTURE' && !isTyping) ||
+        chatState === 'FREE_CHAT'
 
     const handleSend = () => {
         if (showTextInput && inputValue.trim()) {
@@ -125,7 +126,11 @@ export default function ChatWindow() {
                             <input
                                 type={chatState === 'LEAD_CAPTURE' ? 'tel' : 'text'}
                                 className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 transition-all"
-                                placeholder={chatState === 'LEAD_CAPTURE' ? 'Введите номер телефона' : currentStep?.placeholder}
+                                placeholder={
+                                    chatState === 'LEAD_CAPTURE' ? 'Введите номер телефона' :
+                                        chatState === 'FREE_CHAT' ? 'Ваш вопрос...' :
+                                            currentStep?.placeholder
+                                }
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 onKeyDown={handleKeyDown}
