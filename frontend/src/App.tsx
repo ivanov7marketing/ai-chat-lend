@@ -1,9 +1,6 @@
-import React from 'react'
+import LandingPage from './pages/LandingPage';
 
-const App: React.FC = () => {
-    return (
-        <div>ai-chat-lend</div>
-    )
+export default function App() {
+    return <LandingPage />;
 }
 
-export default App
