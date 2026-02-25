@@ -1,0 +1,6 @@
+.env
+pgdata/
+qdrant_data/
+node_modules/
+frontend/dist/
+*.log
