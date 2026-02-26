@@ -132,7 +132,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const nextIndex = getNextStepIndex(currentFunnelStep, updatedAnswers)
 
             if (nextIndex === null) {
-                set({ chatState: 'CALCULATING', isBotMessageReady: false })
+                set({ chatState: 'CALCULATING' })
                 setTimeout(() => _addBotMessage('Считаю смету...'), 800)
                 setTimeout(() => {
                     const a = updatedAnswers
