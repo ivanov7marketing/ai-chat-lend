@@ -96,7 +96,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
         if (chatState === 'WELCOME') {
             if (text.startsWith('🧮')) {
-                set({ chatState: 'FUNNEL', currentFunnelStep: 0 })
+                set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
                 setTimeout(() => {
                     _addBotMessage(FUNNEL_STEPS[0].question)
                 }, 800)
@@ -209,14 +209,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     _addBotMessage(resultText)
                 }, 2800)
             } else {
-                set({ currentFunnelStep: nextIndex })
+                set({ currentFunnelStep: nextIndex, isBotMessageReady: false })
                 setTimeout(() => _addBotMessage(FUNNEL_STEPS[nextIndex].question), 800)
             }
         }
 
         if (chatState === 'SEGMENT_CHOICE') {
             const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
-            set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE' })
+            set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE', isBotMessageReady: false })
             setTimeout(() => {
                 _addBotMessage(`Отлично! Отправлю смету в ${text}.\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
             }, 600)
