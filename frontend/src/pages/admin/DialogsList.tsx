@@ -21,8 +21,12 @@ export default function DialogsList() {
         const fetchDialogs = async () => {
             try {
                 const res = await fetch(`${API_BASE}/api/admin/dialogs`);
-                const data = await res.json();
-                setDialogs(data.data);
+                if (res.ok) {
+                    const data = await res.json();
+                    setDialogs(data.data || []);
+                } else {
+                    console.error("API error fetching dialogs:", await res.text());
+                }
             } catch (err) {
                 console.error("Failed to fetch dialogs", err);
             } finally {
