@@ -65,7 +65,7 @@ export default function ChatWindow() {
             onClick={closeChat}
         >
             <motion.div
-                className="bg-white w-full sm:max-w-lg sm:rounded-3xl flex flex-col overflow-hidden h-[90vh] sm:h-[680px] shadow-2xl"
+                className="bg-white w-full sm:max-w-lg sm:rounded-3xl flex flex-col overflow-hidden h-[100dvh] sm:h-[680px] shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
                 initial={{ y: '100%' }}
                 animate={{ y: 0 }}
