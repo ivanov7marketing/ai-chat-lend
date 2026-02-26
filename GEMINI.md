@@ -273,4 +273,4 @@ PUT  /admin/prices         — обновление price_matrix
 - Пользователь на сервере: deploy
 - Путь проекта: /opt/chatbot
 - Команда деплоя: ssh deploy@89.23.102.93 "/opt/chatbot/deploy.sh"
-- Git: git push origin main → git pull на сервере → docker compose up -d --build
+- Git: git push origin main → git fetch + git reset --hard на сервере → docker compose up -d --build

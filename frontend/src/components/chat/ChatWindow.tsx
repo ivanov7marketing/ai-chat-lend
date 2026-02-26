@@ -15,7 +15,6 @@ export default function ChatWindow() {
         currentFunnelStep,
         funnelAnswers,
         isTyping,
-        isBotMessageReady,
         availableSegments,
         sendUserMessage,
         closeChat,
@@ -65,32 +64,6 @@ export default function ChatWindow() {
         }
     }
 
-    useEffect(() => {
-        const lastMessage = messages[messages.length - 1]
-        // eslint-disable-next-line no-console
-        console.log('[chat-debug]', {
-            chatState,
-            currentFunnelStep,
-            isTyping,
-            isBotMessageReady,
-            lastRole: lastMessage?.role,
-            lastText: lastMessage?.text?.slice(0, 40),
-            showQuickButtons,
-            showLeadButtons,
-            showSegmentButtons,
-            showTextInput,
-        })
-    }, [
-        chatState,
-        currentFunnelStep,
-        isTyping,
-        isBotMessageReady,
-        messages,
-        showQuickButtons,
-        showLeadButtons,
-        showSegmentButtons,
-        showTextInput,
-    ])
 
     return (
         <div
