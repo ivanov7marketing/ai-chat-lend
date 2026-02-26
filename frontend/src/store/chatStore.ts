@@ -20,6 +20,8 @@ interface ChatStore {
     sendUserMessage: (text: string) => Promise<void>
     _addBotMessage: (text: string) => void
     submitLead: (contactType: string, contactValue: string) => Promise<void>
+    socket: WebSocket | null
+    connectWebSocket: () => void
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -34,6 +36,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     sessionId: null,
     estimateMin: 0,
     estimateMax: 0,
+    socket: null,
 
     submitLead: async (contactType, contactValue) => {
         const { sessionId, funnelAnswers, estimateMin, estimateMax } = get()
@@ -52,6 +55,33 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
     },
 
+    connectWebSocket: () => {
+        const socket = new WebSocket((import.meta as any).env.VITE_WS_URL || 'ws://localhost:3000/ws')
+
+        socket.onopen = () => {
+            console.log('WebSocket connected')
+        }
+
+        socket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data)
+
+                if (data.type === 'session_created') {
+                    set({ sessionId: data.sessionId })
+                }
+            } catch (e) {
+                console.error('WebSocket receive error:', e)
+            }
+        }
+
+        socket.onclose = () => {
+            console.log('WebSocket disconnected')
+            set({ socket: null })
+        }
+
+        set({ socket })
+    },
+
     _addBotMessage: (text: string) => {
         set({ isTyping: true, isBotMessageReady: false })
         setTimeout(() => {
@@ -66,22 +96,28 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     openChat: (initialQuestion?: string) => {
-        const newSessionId = crypto.randomUUID()
         set({
             isOpen: true,
             chatState: 'WELCOME',
             messages: [],
             funnelAnswers: {},
             currentFunnelStep: 0,
-            sessionId: newSessionId,
+            sessionId: null, // Will be set by WebSocket
         })
+        get().connectWebSocket()
         get()._addBotMessage(WELCOME_MESSAGE)
         if (initialQuestion) {
             setTimeout(() => get().sendUserMessage(initialQuestion), 1200)
         }
     },
 
-    closeChat: () => set({ isOpen: false }),
+    closeChat: () => {
+        const { socket } = get()
+        if (socket) {
+            socket.close()
+        }
+        set({ isOpen: false, socket: null })
+    },
 
     sendUserMessage: async (text: string) => {
         const userMsg: Message = {
@@ -92,7 +128,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
-        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage } = get()
+        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket } = get()
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: 'message',
+                role: 'user',
+                content: text,
+                id: userMsg.id
+            }))
+        }
 
         if (chatState === 'WELCOME') {
             if (text.startsWith('🧮')) {
