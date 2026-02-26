@@ -10,6 +10,7 @@ interface ChatStore {
     currentFunnelStep: number
     funnelAnswers: FunnelAnswers
     isTyping: boolean
+    isBotMessageReady: boolean
     availableSegments: string[]
     sessionId: string | null
     estimateMin: number
@@ -28,6 +29,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     currentFunnelStep: 0,
     funnelAnswers: {},
     isTyping: false,
+    isBotMessageReady: false,
     availableSegments: [],
     sessionId: null,
     estimateMin: 0,
@@ -51,7 +53,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     _addBotMessage: (text: string) => {
-        set({ isTyping: true })
+        set({ isTyping: true, isBotMessageReady: false })
         setTimeout(() => {
             const msg: Message = {
                 id: Date.now().toString(),
@@ -59,7 +61,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 text,
                 timestamp: Date.now(),
             }
-            set((s) => ({ isTyping: false, messages: [...s.messages, msg] }))
+            set((s) => ({ isTyping: false, isBotMessageReady: true, messages: [...s.messages, msg] }))
         }, 400)
     },
 
