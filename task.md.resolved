@@ -1,0 +1,39 @@
+# Админ-панель: полная реализация фронтенда
+
+## 1. Подготовка
+- [x] Прочитать GEMINI.md, DESIGN.md, AGENTS.md, ADMINPANEL.md
+- [x] Проанализировать существующий код (6 файлов frontend + backend routes)
+- [ ] Составить план реализации
+- [ ] Получить одобрение плана
+
+## 2. Общий API-сервис и типы
+- [ ] Создать `frontend/src/services/adminApi.ts` — централизованный API-клиент
+- [ ] Создать `frontend/src/types/admin.ts` — типы для админ-панели
+
+## 3. Sidebar + Layout
+- [ ] Улучшить [AdminLayout.tsx](file:///c:/dev/ai-chat-lend/frontend/src/pages/admin/AdminLayout.tsx) — Lucide-иконки, active-state, mobile-responsive
+
+## 4. Dashboard
+- [ ] Полностью переделать [Dashboard.tsx](file:///c:/dev/ai-chat-lend/frontend/src/pages/admin/Dashboard.tsx) — 7 метрик, карточки с динамикой, воронка конверсии, фильтры по периоду
+
+## 5. Диалоги
+- [ ] Улучшить [DialogsList.tsx](file:///c:/dev/ai-chat-lend/frontend/src/pages/admin/DialogsList.tsx) — фильтры (дата, статус, сегмент), пагинация, дополнительные столбцы (площадь, тип, сегмент, вилка, оценка)
+- [ ] Улучшить [DialogDetail.tsx](file:///c:/dev/ai-chat-lend/frontend/src/pages/admin/DialogDetail.tsx) — оценка, метаданные, сообщения менеджера (синий фон)
+
+## 6. Настройка бота
+- [ ] Создать `BotSettings.tsx` — страница с вкладками (табы)
+- [ ] Вкладка «Личность» — имя, аватар, тон, приветствие, быстрые кнопки
+- [ ] Вкладка «Сегменты ремонта» — 4 карточки с inline-редактированием
+- [ ] Вкладка «Поведение» — триггеры, лимит CTA, дисклеймеры
+- [ ] Вкладка «База знаний» — загрузка документов, статьи, белые пятна
+
+## 7. Справочник цен
+- [ ] Улучшить [PricesList.tsx](file:///c:/dev/ai-chat-lend/frontend/src/pages/admin/PricesList.tsx) — фильтрация по категории, добавление вида работ, дата актуальности
+
+## 8. Интеграции
+- [ ] Создать `Integrations.tsx` — RouterAI, Telegram, Яндекс Метрика, amoCRM
+
+## 9. Роутинг и финализация
+- [ ] Обновить [App.tsx](file:///c:/dev/ai-chat-lend/frontend/src/App.tsx) — добавить новые маршруты
+- [ ] Сборка и проверка
+- [ ] Git commit + push

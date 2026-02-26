@@ -5,7 +5,8 @@ import DialogsList from './pages/admin/DialogsList';
 import DialogDetail from './pages/admin/DialogDetail';
 import PricesList from './pages/admin/PricesList';
 import Dashboard from './pages/admin/Dashboard';
-import Settings from './pages/admin/Settings';
+import BotSettings from './pages/admin/BotSettings';
+import Integrations from './pages/admin/Integrations';
 
 export default function App() {
     return (
@@ -17,8 +18,9 @@ export default function App() {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="dialogs" element={<DialogsList />} />
                     <Route path="dialogs/:id" element={<DialogDetail />} />
+                    <Route path="bot" element={<BotSettings />} />
                     <Route path="prices" element={<PricesList />} />
-                    <Route path="settings" element={<Settings />} />
+                    <Route path="integrations" element={<Integrations />} />
                 </Route>
             </Routes>
         </BrowserRouter>

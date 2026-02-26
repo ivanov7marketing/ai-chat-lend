@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
+import { getPrices, updatePrices, addWorkType } from '../../services/adminApi';
+import type { PriceRecord } from '../../types/admin';
+import { Save, Plus, X, Filter } from 'lucide-react';
 
-const API_BASE = (import.meta as any).env.VITE_API_URL || '';
-
-interface PriceRecord {
-    work_type_id: number;
-    name: string;
-    unit: string | null;
-    category: string | null;
-    segment: string | null;
-    price_min: string | null;
-    price_max: string | null;
-}
+const CATEGORIES = ['Все', 'Стены', 'Пол', 'Потолок', 'Электрика', 'Сантехника', 'Общее'];
+const SEGMENTS = ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'];
 
 export default function PricesList() {
     const [prices, setPrices] = useState<PriceRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [filterCategory, setFilterCategory] = useState('Все');
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Стены' });
+    const [newPrices, setNewPrices] = useState<Record<string, { min: string; max: string }>>(
+        Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }]))
+    );
 
     useEffect(() => {
         fetchPrices();
@@ -23,15 +23,10 @@ export default function PricesList() {
 
     const fetchPrices = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/admin/prices`);
-            if (res.ok) {
-                const data = await res.json();
-                setPrices(data || []);
-            } else {
-                console.error("Failed to fetch prices:", await res.text());
-            }
+            const data = await getPrices();
+            setPrices(data || []);
         } catch (err) {
-            console.error("Network error fetching prices:", err);
+            console.error('Failed to fetch prices:', err);
         } finally {
             setLoading(false);
         }
@@ -40,111 +35,288 @@ export default function PricesList() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const updates = prices.filter(p => p.segment).map(p => ({
-                workTypeId: p.work_type_id,
-                segment: p.segment!,
-                priceMin: Number(p.price_min) || 0,
-                priceMax: Number(p.price_max) || 0,
-            }));
-
-            const res = await fetch(`${API_BASE}/api/admin/prices`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updates),
-            });
-
-            if (res.ok) {
-                alert('Цены успешно сохранены!');
-                await fetchPrices();
-            } else {
-                alert('Ошибка при сохранении цен.');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Ошибка сети при сохранении.');
+            const updates = prices
+                .filter((p) => p.segment)
+                .map((p) => ({
+                    workTypeId: p.work_type_id,
+                    segment: p.segment!,
+                    priceMin: Number(p.price_min) || 0,
+                    priceMax: Number(p.price_max) || 0,
+                }));
+            await updatePrices(updates);
+            await fetchPrices();
         } finally {
             setSaving(false);
         }
     };
 
-    const handleInputChange = (index: number, field: 'price_min' | 'price_max' | 'segment', value: string) => {
-        const newPrices = [...prices];
-        newPrices[index] = { ...newPrices[index], [field]: value };
-        setPrices(newPrices);
+    const handleInputChange = (
+        index: number,
+        field: 'price_min' | 'price_max' | 'segment',
+        value: string
+    ) => {
+        const newList = [...prices];
+        newList[index] = { ...newList[index], [field]: value };
+        setPrices(newList);
     };
 
-    if (loading) return <div className="p-8 text-gray-500">Загрузка матрицы цен...</div>;
+    const handleAddWorkType = async () => {
+        const pricesData = SEGMENTS.map((s) => ({
+            segment: s,
+            priceMin: Number(newPrices[s].min) || 0,
+            priceMax: Number(newPrices[s].max) || 0,
+        })).filter((p) => p.priceMin > 0 || p.priceMax > 0);
+
+        await addWorkType({
+            name: newWork.name,
+            unit: newWork.unit,
+            category: newWork.category,
+            prices: pricesData,
+        });
+
+        setShowAddModal(false);
+        setNewWork({ name: '', unit: 'м²', category: 'Стены' });
+        setNewPrices(Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }])));
+        await fetchPrices();
+    };
+
+    const filtered = filterCategory === 'Все'
+        ? prices
+        : prices.filter((p) => p.category === filterCategory);
+
+    if (loading) {
+        return (
+            <div className="p-8">
+                <div className="animate-pulse space-y-4">
+                    <div className="bg-gray-200 rounded-xl h-8 w-48" />
+                    <div className="bg-gray-200 rounded-2xl h-96" />
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Матрица цен</h1>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                    {saving ? 'Сохранение...' : 'Сохранить изменения'}
-                </button>
+        <div className="p-8 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Матрица цен</h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Цены актуальны на февраль 2026 • {prices.length} записей
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-full shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 text-sm"
+                    >
+                        <Plus className="w-4 h-4" strokeWidth={1.5} />
+                        Добавить вид работ
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary-500 text-white font-medium rounded-full shadow-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md disabled:opacity-50 text-sm"
+                    >
+                        <Save className="w-4 h-4" strokeWidth={1.5} />
+                        {saving ? 'Сохранение...' : 'Сохранить'}
+                    </button>
+                </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 border-b border-gray-100 text-sm font-medium text-gray-500">
-                            <th className="p-4 font-normal">Категория</th>
-                            <th className="p-4 font-normal">Вид работ</th>
-                            <th className="p-4 font-normal">Ед. изм.</th>
-                            <th className="p-4 font-normal">Сегмент</th>
-                            <th className="p-4 font-normal">Цена (от)</th>
-                            <th className="p-4 font-normal">Цена (до)</th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-sm divide-y divide-gray-50">
-                        {prices.map((p, index) => (
-                            <tr key={`${p.work_type_id}-${p.segment || index}`} className="hover:bg-blue-50/50 transition-colors">
-                                <td className="p-4 text-gray-500">{p.category || '—'}</td>
-                                <td className="p-4 font-medium text-gray-900">{p.name}</td>
-                                <td className="p-4 text-gray-500">{p.unit || '—'}</td>
-                                <td className="p-4">
-                                    <select
-                                        value={p.segment || ''}
-                                        onChange={(e) => handleInputChange(index, 'segment', e.target.value)}
-                                        className="border-gray-200 rounded-lg text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-blue-500"
-                                    >
-                                        <option value="">Выберите...</option>
-                                        <option value="Эконом">Эконом</option>
-                                        <option value="Стандарт">Стандарт</option>
-                                        <option value="Комфорт">Комфорт</option>
-                                        <option value="Премиум">Премиум</option>
-                                    </select>
-                                </td>
-                                <td className="p-4">
-                                    <input
-                                        type="number"
-                                        value={p.price_min || ''}
-                                        onChange={(e) => handleInputChange(index, 'price_min', e.target.value)}
-                                        className="w-24 border-gray-200 rounded-lg text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="0"
-                                    />
-                                </td>
-                                <td className="p-4">
-                                    <input
-                                        type="number"
-                                        value={p.price_max || ''}
-                                        onChange={(e) => handleInputChange(index, 'price_max', e.target.value)}
-                                        className="w-24 border-gray-200 rounded-lg text-sm px-3 py-1.5 focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="0"
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {prices.length === 0 && (
-                    <div className="p-8 text-center text-gray-400">Нет добавленных видов работ. База пуста.</div>
-                )}
+            {/* Category Filter */}
+            <div className="flex items-center gap-2 mb-4">
+                <Filter className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
+                    {CATEGORIES.map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => setFilterCategory(cat)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${filterCategory === cat
+                                    ? 'bg-primary-500 text-white shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
             </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead>
+                            <tr className="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                <th className="px-4 py-3">Категория</th>
+                                <th className="px-4 py-3">Вид работ</th>
+                                <th className="px-4 py-3">Ед. изм.</th>
+                                <th className="px-4 py-3">Сегмент</th>
+                                <th className="px-4 py-3">Цена от</th>
+                                <th className="px-4 py-3">Цена до</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.map((p, index) => {
+                                const realIndex = prices.indexOf(p);
+                                return (
+                                    <tr
+                                        key={`${p.work_type_id}-${p.segment || index}`}
+                                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
+                                    >
+                                        <td className="px-4 py-3.5">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                                {p.category || '—'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3.5 font-medium text-gray-900">{p.name}</td>
+                                        <td className="px-4 py-3.5 text-gray-500">{p.unit || '—'}</td>
+                                        <td className="px-4 py-3.5">
+                                            <select
+                                                value={p.segment || ''}
+                                                onChange={(e) => handleInputChange(realIndex, 'segment', e.target.value)}
+                                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                            >
+                                                <option value="">—</option>
+                                                {SEGMENTS.map((s) => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td className="px-4 py-3.5">
+                                            <input
+                                                type="number"
+                                                value={p.price_min || ''}
+                                                onChange={(e) => handleInputChange(realIndex, 'price_min', e.target.value)}
+                                                className="w-24 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                placeholder="0"
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3.5">
+                                            <input
+                                                type="number"
+                                                value={p.price_max || ''}
+                                                onChange={(e) => handleInputChange(realIndex, 'price_max', e.target.value)}
+                                                className="w-24 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                placeholder="0"
+                                            />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {filtered.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                                        {filterCategory === 'Все'
+                                            ? 'Нет видов работ. Добавьте первый.'
+                                            : `Нет работ в категории «${filterCategory}».`}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Add Work Type Modal */}
+            {showAddModal && (
+                <>
+                    <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40" onClick={() => setShowAddModal(false)} />
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 z-50">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="text-xl font-semibold text-gray-900">Добавить вид работ</h3>
+                                <p className="text-sm text-gray-500 mt-1">Заполните информацию о новом виде работ</p>
+                            </div>
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200"
+                            >
+                                <X className="w-5 h-5" strokeWidth={1.5} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Название</label>
+                                <input
+                                    type="text"
+                                    value={newWork.name}
+                                    onChange={(e) => setNewWork({ ...newWork, name: e.target.value })}
+                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
+                                    placeholder="Штукатурка стен по маякам"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Единица измерения</label>
+                                    <input
+                                        type="text"
+                                        value={newWork.unit}
+                                        onChange={(e) => setNewWork({ ...newWork, unit: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Категория</label>
+                                    <select
+                                        value={newWork.category}
+                                        onChange={(e) => setNewWork({ ...newWork, category: e.target.value })}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
+                                    >
+                                        {CATEGORIES.filter((c) => c !== 'Все').map((c) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Цены по сегментам</label>
+                                <div className="space-y-2">
+                                    {SEGMENTS.map((seg) => (
+                                        <div key={seg} className="flex items-center gap-3">
+                                            <span className="w-24 text-sm text-gray-600">{seg}</span>
+                                            <input
+                                                type="number"
+                                                value={newPrices[seg].min}
+                                                onChange={(e) => setNewPrices({ ...newPrices, [seg]: { ...newPrices[seg], min: e.target.value } })}
+                                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                placeholder="от"
+                                            />
+                                            <span className="text-gray-400">—</span>
+                                            <input
+                                                type="number"
+                                                value={newPrices[seg].max}
+                                                onChange={(e) => setNewPrices({ ...newPrices, [seg]: { ...newPrices[seg], max: e.target.value } })}
+                                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                placeholder="до"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-full transition-all duration-200 hover:bg-gray-50 text-sm"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleAddWorkType}
+                                disabled={!newWork.name.trim()}
+                                className="flex-1 px-4 py-2.5 bg-primary-500 text-white font-medium rounded-full shadow-sm transition-all duration-200 hover:bg-primary-600 disabled:opacity-50 text-sm"
+                            >
+                                Добавить
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
