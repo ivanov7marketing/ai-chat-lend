@@ -40,6 +40,21 @@ export async function runMigrations() {
       pdf_url TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS work_types (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      unit TEXT,
+      category TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS price_matrix (
+      work_type_id INT REFERENCES work_types(id) ON DELETE CASCADE,
+      segment TEXT NOT NULL,
+      price_min NUMERIC,
+      price_max NUMERIC,
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(work_type_id, segment)
+    );
   `)
   console.log('Migrations complete')
 }

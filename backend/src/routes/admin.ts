@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { getDialogsList, getDialogDetail, updatePrices } from '../services/adminService'
+import { getDialogsList, getDialogDetail, getPricesList, updatePrices } from '../services/adminService'
 
 export async function adminRoutes(fastify: FastifyInstance) {
     fastify.get('/api/admin/dialogs', async (req: FastifyRequest, reply: FastifyReply) => {
@@ -30,9 +30,20 @@ export async function adminRoutes(fastify: FastifyInstance) {
         }
     })
 
+    fastify.get('/api/admin/prices', async (req: FastifyRequest, reply: FastifyReply) => {
+        try {
+            const list = await getPricesList()
+            return reply.send(list)
+        } catch (e) {
+            fastify.log.error(e, 'Error fetching prices list:')
+            return reply.status(500).send({ error: 'Internal server error' })
+        }
+    })
+
     fastify.put('/api/admin/prices', async (req: FastifyRequest, reply: FastifyReply) => {
         try {
-            const result = await updatePrices()
+            const updates = req.body as { workTypeId: number, segment: string, priceMin: number, priceMax: number }[]
+            const result = await updatePrices(updates)
             return reply.send(result)
         } catch (e) {
             fastify.log.error(e, 'Error updating prices:')

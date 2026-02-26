@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import DialogsList from './pages/admin/DialogsList';
 import DialogDetail from './pages/admin/DialogDetail';
+import PricesList from './pages/admin/PricesList';
 
 export default function App() {
     return (
@@ -13,6 +14,7 @@ export default function App() {
                     <Route index element={<DialogsList />} />
                     <Route path="dialogs" element={<DialogsList />} />
                     <Route path="dialogs/:id" element={<DialogDetail />} />
+                    <Route path="prices" element={<PricesList />} />
                 </Route>
             </Routes>
         </BrowserRouter>

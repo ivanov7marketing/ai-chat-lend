@@ -14,9 +14,9 @@ export default function AdminLayout() {
                     <Link to="/admin/dialogs" className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                         Диалоги и Лиды
                     </Link>
-                    <div className="px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed">
-                        Матрица цен (в разработке)
-                    </div>
+                    <Link to="/admin/prices" className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                        Матрица цен
+                    </Link>
                 </nav>
                 <div className="p-4 border-t">
                     <Link to="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">

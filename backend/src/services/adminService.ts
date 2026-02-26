@@ -42,7 +42,41 @@ export async function getDialogDetail(sessionId: string) {
     }
 }
 
-export async function updatePrices() {
-    // Placeholder implementation for v1.2 prices update
-    return { success: true }
+export async function getPricesList() {
+    const res = await pool.query(`
+        SELECT 
+            w.id as work_type_id,
+            w.name,
+            w.unit,
+            w.category,
+            p.segment,
+            p.price_min,
+            p.price_max
+        FROM work_types w
+        LEFT JOIN price_matrix p ON w.id = p.work_type_id
+        ORDER BY w.category ASC, w.id ASC
+    `)
+    return res.rows
+}
+
+export async function updatePrices(updates: { workTypeId: number, segment: string, priceMin: number, priceMax: number }[]) {
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN')
+        for (const u of updates) {
+            await client.query(`
+                INSERT INTO price_matrix (work_type_id, segment, price_min, price_max, updated_at)
+                VALUES ($1, $2, $3, $4, NOW())
+                ON CONFLICT (work_type_id, segment) 
+                DO UPDATE SET price_min = EXCLUDED.price_min, price_max = EXCLUDED.price_max, updated_at = NOW()
+            `, [u.workTypeId, u.segment, u.priceMin, u.priceMax])
+        }
+        await client.query('COMMIT')
+        return { success: true }
+    } catch (e) {
+        await client.query('ROLLBACK')
+        throw e
+    } finally {
+        client.release()
+    }
 }
