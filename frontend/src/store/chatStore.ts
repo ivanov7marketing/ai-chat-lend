@@ -15,11 +15,13 @@ interface ChatStore {
     sessionId: string | null
     estimateMin: number
     estimateMax: number
+    tenantSlug: string | null
     openChat: (initialQuestion?: string) => void
     closeChat: () => void
     sendUserMessage: (text: string) => Promise<void>
     _addBotMessage: (text: string) => void
     submitLead: (contactType: string, contactValue: string) => Promise<void>
+    setTenantSlug: (slug: string) => void
     socket: WebSocket | null
     connectWebSocket: () => void
 }
@@ -36,6 +38,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     sessionId: null,
     estimateMin: 0,
     estimateMax: 0,
+    tenantSlug: null,
     socket: null,
 
     submitLead: async (contactType, contactValue) => {
@@ -55,8 +58,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
     },
 
+    setTenantSlug: (slug: string) => {
+        set({ tenantSlug: slug })
+    },
+
     connectWebSocket: () => {
-        const socket = new WebSocket((import.meta as any).env.VITE_WS_URL || 'ws://localhost:3000/ws')
+        const { tenantSlug } = get()
+        const wsBase = (import.meta as any).env.VITE_WS_URL || 'ws://localhost:3000'
+        const wsPath = tenantSlug ? `/ws/${tenantSlug}` : '/ws'
+        const socket = new WebSocket(`${wsBase}${wsPath}`)
 
         socket.onopen = () => {
             console.log('WebSocket connected')

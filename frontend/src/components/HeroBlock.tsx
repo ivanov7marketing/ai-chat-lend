@@ -3,9 +3,11 @@ import { Bot } from 'lucide-react';
 
 interface HeroBlockProps {
     onStart: () => void;
+    title?: string;
+    subtitle?: string;
 }
 
-const HeroBlock: React.FC<HeroBlockProps> = ({ onStart }) => {
+const HeroBlock: React.FC<HeroBlockProps> = ({ onStart, title, subtitle }) => {
     return (
         <section className="max-w-2xl mx-auto px-6 py-16 text-center">
             <div className="relative inline-flex mx-auto mb-8">
@@ -16,11 +18,11 @@ const HeroBlock: React.FC<HeroBlockProps> = ({ onStart }) => {
             </div>
 
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 text-center">
-                Получите пример сметы на ремонт квартиры под ключ с актуальными ценами в Челябинске в 2026 году
+                {title || 'Получите пример сметы на ремонт квартиры под ключ с актуальными ценами в Челябинске в 2026 году'}
             </h1>
 
             <p className="text-lg text-gray-500 mt-4 text-center">
-                AI-эксперт Макс обучен на реальных данных — он составит примерную смету, рассчитает сроки и ответит на вопросы о ремонте
+                {subtitle || 'AI-эксперт Макс обучен на реальных данных — он составит примерную смету, рассчитает сроки и ответит на вопросы о ремонте'}
             </p>
 
             <button

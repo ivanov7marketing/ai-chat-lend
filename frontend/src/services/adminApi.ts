@@ -17,9 +17,23 @@ import type {
 
 const API_BASE = (import.meta as any).env.VITE_API_URL || '';
 
+function getToken(): string {
+    return localStorage.getItem('auth_token') || ''
+}
+
+function getAdminBase(slug?: string): string {
+    const s = slug || localStorage.getItem('auth_slug') || ''
+    return s ? `/api/t/${s}/admin` : '/api/admin'
+}
+
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+    const token = getToken()
     const res = await fetch(`${API_BASE}${url}`, {
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options?.headers,
+        },
         ...options,
     });
     if (!res.ok) {
@@ -35,7 +49,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     // TODO: replace with real endpoint GET /api/admin/dashboard/metrics
     try {
         const data = await apiFetch<{ data: DialogSession[]; total: number }>(
-            '/api/admin/dialogs?limit=10000'
+            `${getAdminBase()}/dialogs?limit=10000`
         );
         const sessions = data.data || [];
         const leads = sessions.filter((s) => s.status === 'converted');
@@ -71,7 +85,7 @@ export async function getDialogs(
     offset = 0
 ): Promise<{ data: DialogSession[]; total: number }> {
     const res = await apiFetch<{ data: DialogSession[]; total: number }>(
-        `/api/admin/dialogs?limit=${limit}&offset=${offset}`
+        `${getAdminBase()}/dialogs?limit=${limit}&offset=${offset}`
     );
     let filtered = res.data;
 
@@ -102,7 +116,7 @@ export async function getDialogDetail(
     id: string
 ): Promise<DialogDetailData | null> {
     try {
-        return await apiFetch<DialogDetailData>(`/api/admin/dialog/${id}`);
+        return await apiFetch<DialogDetailData>(`${getAdminBase()}/dialog/${id}`);
     } catch {
         return null;
     }
@@ -119,13 +133,13 @@ export async function updateDialogRating(
 // ============ Prices ============
 
 export async function getPrices(): Promise<PriceRecord[]> {
-    return apiFetch<PriceRecord[]>('/api/admin/prices');
+    return apiFetch<PriceRecord[]>(`${getAdminBase()}/prices`);
 }
 
 export async function updatePrices(
     updates: { workTypeId: number; segment: string; priceMin: number; priceMax: number }[]
 ): Promise<{ success: boolean }> {
-    return apiFetch<{ success: boolean }>('/api/admin/prices', {
+    return apiFetch<{ success: boolean }>(`${getAdminBase()}/prices`, {
         method: 'PUT',
         body: JSON.stringify(updates),
     });
