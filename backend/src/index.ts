@@ -5,6 +5,7 @@ import { runMigrations } from './db/migrate'
 import fastifyWebsocket from '@fastify/websocket'
 import { wsRoutes } from './routes/ws'
 import { leadsRoutes } from './routes/leads'
+import { adminRoutes } from './routes/admin'
 
 dotenv.config()
 
@@ -19,6 +20,7 @@ server.register(cors, {
 server.register(fastifyWebsocket)
 server.register(wsRoutes)
 server.register(leadsRoutes)
+server.register(adminRoutes)
 
 server.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.send({ status: 'ok' })
