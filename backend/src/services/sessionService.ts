@@ -1,9 +1,9 @@
 import { pool } from '../db/client'
 
-export async function createSession(utmSource?: string, device?: string) {
+export async function createSession(utmSource?: string, device?: string, tenantId?: string) {
     const res = await pool.query(
-        `INSERT INTO sessions (utm_source, device) VALUES ($1, $2) RETURNING id`,
-        [utmSource || null, device || null]
+        `INSERT INTO sessions (utm_source, device, tenant_id) VALUES ($1, $2, $3) RETURNING id`,
+        [utmSource || null, device || null, tenantId || null]
     )
     return res.rows[0].id as string
 }

@@ -6,6 +6,9 @@ import fastifyWebsocket from '@fastify/websocket'
 import { wsRoutes } from './routes/ws'
 import { leadsRoutes } from './routes/leads'
 import { adminRoutes } from './routes/admin'
+import { authRoutes } from './routes/auth'
+import { tenantPublicRoutes } from './routes/tenantPublic'
+import { superAdminRoutes } from './routes/superAdmin'
 
 dotenv.config()
 
@@ -21,6 +24,9 @@ server.register(fastifyWebsocket)
 server.register(wsRoutes)
 server.register(leadsRoutes)
 server.register(adminRoutes)
+server.register(authRoutes)
+server.register(tenantPublicRoutes)
+server.register(superAdminRoutes)
 
 server.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.send({ status: 'ok' })
