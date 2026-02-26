@@ -15,7 +15,6 @@ export default function ChatWindow() {
         currentFunnelStep,
         funnelAnswers,
         isTyping,
-        isBotMessageReady,
         availableSegments,
         sendUserMessage,
         closeChat,
@@ -30,18 +29,22 @@ export default function ChatWindow() {
 
     const currentStep = FUNNEL_STEPS[currentFunnelStep]
 
+    const lastMessage = messages[messages.length - 1]
+    const lastMessageIsBot = lastMessage?.role === 'bot'
+    const canShowButtons = lastMessageIsBot && !isTyping
+
     const showQuickButtons =
-        (chatState === 'WELCOME' && isBotMessageReady) ||
-        (chatState === 'FUNNEL' && currentStep?.type === 'buttons' && !isTyping && isBotMessageReady)
+        (chatState === 'WELCOME' && canShowButtons) ||
+        (chatState === 'FUNNEL' && currentStep?.type === 'buttons' && canShowButtons)
 
     const currentButtons =
         chatState === 'WELCOME' ? WELCOME_QUICK_BUTTONS : currentStep?.options ?? []
 
-    const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && !isTyping && isBotMessageReady
-    const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && !isTyping && isBotMessageReady
+    const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
+    const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
     const leadButtons = ['Telegram', 'MAX']
 
-    const showTextInput = isBotMessageReady && (
+    const showTextInput = canShowButtons && (
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
         (chatState === 'LEAD_CAPTURE' && !isTyping) ||
         chatState === 'FREE_CHAT'
