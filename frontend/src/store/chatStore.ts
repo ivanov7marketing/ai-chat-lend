@@ -223,7 +223,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (chatState === 'LEAD_CAPTURE') {
             const updatedAnswers = { ...funnelAnswers, phone: text }
             set({ funnelAnswers: updatedAnswers })
-            await get().submitLead(funnelAnswers.contactChannel || 'Telegram', text)
+            await get().submitLead('phone', text)
             set({ chatState: 'FREE_CHAT' })
             setTimeout(() => _addBotMessage(
                 'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'
