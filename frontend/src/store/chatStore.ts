@@ -90,7 +90,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             text,
             timestamp: Date.now(),
         }
-        set((s) => ({ messages: [...s.messages, userMsg] }))
+        set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage } = get()
 
