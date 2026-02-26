@@ -11,11 +11,17 @@ export default function AdminLayout() {
                     </h2>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
+                    <Link to="/admin/dashboard" className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                        Сводка
+                    </Link>
                     <Link to="/admin/dialogs" className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                         Диалоги и Лиды
                     </Link>
                     <Link to="/admin/prices" className="block px-4 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                         Матрица цен
+                    </Link>
+                    <Link to="/admin/settings" className="block px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors mt-4 border-t pt-4">
+                        <span className="flex items-center gap-2">⚙️ Настройки</span>
                     </Link>
                 </nav>
                 <div className="p-4 border-t">
