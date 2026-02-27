@@ -12,6 +12,7 @@ import SuperDashboard from './pages/superadmin/SuperDashboard'
 import TenantsList from './pages/superadmin/TenantsList'
 import TenantDetail from './pages/superadmin/TenantDetail'
 import AuditLogPage from './pages/superadmin/AuditLogPage'
+import InvoicesList from './pages/superadmin/InvoicesList'
 
 // Tenant pages
 import TenantLanding from './pages/tenant/TenantLanding'
@@ -54,6 +55,7 @@ export default function App() {
                         <Route index element={<SuperDashboard />} />
                         <Route path="tenants" element={<TenantsList />} />
                         <Route path="tenants/:id" element={<TenantDetail />} />
+                        <Route path="invoices" element={<InvoicesList />} />
                         <Route path="audit" element={<AuditLogPage />} />
                     </Route>
 

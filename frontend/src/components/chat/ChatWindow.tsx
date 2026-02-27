@@ -180,6 +180,15 @@ export default function ChatWindow() {
                         </p>
                     )}
                 </div>
+
+                {/* Footer Branding — hidden if isWhiteLabel */}
+                {!tenantConfig?.isWhiteLabel && (
+                    <div className="py-2 text-center bg-gray-50/50">
+                        <p className="text-[10px] text-gray-400 font-medium tracking-tight">
+                            ⚡ Powered by <span className="text-primary-500 font-semibold uppercase tracking-widest text-[9px]">AI Max</span>
+                        </p>
+                    </div>
+                )}
             </motion.div>
         </div>
     )

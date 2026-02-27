@@ -95,6 +95,7 @@ export interface BotPersonality {
     welcomeMessage: string;
     quickButtons: QuickButton[];
     funnelSteps?: any[] | null;
+    isWhiteLabel?: boolean;
 }
 
 export interface QuickButton {
@@ -199,6 +200,7 @@ export interface TenantBrandingData {
     footerText: string;
     faviconUrl: string | null;
     metaDescription: string;
+    customDomain?: string | null;
 }
 
 // ============ Team ============

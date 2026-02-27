@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getBranding, updateBranding, uploadFile } from '../../services/tenantAdminApi';
+import { getBranding, updateBranding, uploadFile, updateDomain, verifyDomain } from '../../services/tenantAdminApi';
 import type { TenantBrandingData } from '../../types/admin';
-import { Save, Loader2, Palette, Type, Image, FileText, CheckCircle, Upload, Trash2 } from 'lucide-react';
+import { Save, Loader2, Palette, Type, Image, FileText, CheckCircle, Upload, Trash2, Globe, ExternalLink, AlertCircle } from 'lucide-react';
 
 const INITIAL_BRANDING: TenantBrandingData = {
     primaryColor: '#22c55e',
@@ -13,6 +13,7 @@ const INITIAL_BRANDING: TenantBrandingData = {
     footerText: '',
     faviconUrl: null,
     metaDescription: '',
+    customDomain: null,
 };
 
 export default function TenantBranding() {
@@ -21,6 +22,8 @@ export default function TenantBranding() {
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState('');
+    const [dnsVerifying, setDnsVerifying] = useState(false);
+    const [dnsResult, setDnsResult] = useState<{ success: boolean; error?: string } | null>(null);
 
     const loadBranding = useCallback(async () => {
         try {
@@ -63,6 +66,29 @@ export default function TenantBranding() {
             updateField(field, url);
         } catch (err: any) {
             setError('Ошибка загрузки: ' + err.message);
+        }
+    };
+
+    const handleUpdateDomain = async (domain: string) => {
+        try {
+            setData(prev => ({ ...prev, customDomain: domain }));
+            await updateDomain(domain || null);
+            setDnsResult(null);
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    const handleVerifyDomain = async () => {
+        try {
+            setDnsVerifying(true);
+            setDnsResult(null);
+            const res = await verifyDomain();
+            setDnsResult(res);
+        } catch (err: any) {
+            setDnsResult({ success: false, error: err.message });
+        } finally {
+            setDnsVerifying(false);
         }
     };
 
@@ -323,6 +349,81 @@ export default function TenantBranding() {
                     <p className="mt-1 text-xs text-gray-400">
                         {data.metaDescription.length} / 300
                     </p>
+                </div>
+            </div>
+
+            {/* Custom Domain — Enterprise ONLY */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-primary-500" strokeWidth={1.5} />
+                        <h2 className="text-lg font-semibold text-gray-900">Свой домен</h2>
+                    </div>
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[10px] font-bold uppercase tracking-wider">Enterprise</span>
+                </div>
+
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                        Подключите собственный домен для посадочной страницы.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="flex-1">
+                            <input
+                                type="text"
+                                value={data.customDomain || ''}
+                                onChange={(e) => handleUpdateDomain(e.target.value)}
+                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50"
+                                placeholder="chat.yourdomain.com"
+                            />
+                        </div>
+                        <button
+                            onClick={handleVerifyDomain}
+                            disabled={dnsVerifying || !data.customDomain}
+                            className="inline-flex items-center justify-center px-6 py-3 bg-gray-50 text-gray-700 font-medium rounded-xl border border-gray-200 transition-all duration-200 hover:bg-gray-100 disabled:opacity-50"
+                        >
+                            {dnsVerifying ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                            Проверить DNS
+                        </button>
+                    </div>
+
+                    {dnsResult && (
+                        <div className={`p-4 rounded-xl border flex gap-3 ${dnsResult.success ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'
+                            }`}>
+                            {dnsResult.success ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                            <div className="text-sm">
+                                <p className="font-semibold">{dnsResult.success ? 'Домен успешно подтвержден!' : 'Ошибка подтверждения'}</p>
+                                {!dnsResult.success && <p className="mt-1">{dnsResult.error}</p>}
+                                {dnsResult.success && (
+                                    <a
+                                        href={`https://${data.customDomain}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                                    >
+                                        Открыть сайт <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {!dnsResult && data.customDomain && (
+                        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <h4 className="text-sm font-semibold text-gray-900 mb-2">Настройка DNS:</h4>
+                            <p className="text-xs text-gray-600 mb-2">Создайте CNAME запись в панели управления вашего домена:</p>
+                            <div className="bg-white p-3 rounded-lg border border-gray-200 font-mono text-xs space-y-1">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Host:</span>
+                                    <span className="font-bold text-gray-900">{data.customDomain.includes('.') ? data.customDomain.split('.')[0] : '@'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-400">Value:</span>
+                                    <span className="font-bold text-gray-900">ai-chat-lend.ru</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

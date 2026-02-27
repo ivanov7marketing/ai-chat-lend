@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getBilling } from '../../services/tenantAdminApi';
+import { getBilling, getInvoices, createInvoice } from '../../services/tenantAdminApi';
 import type { BillingData, UsageItem } from '../../types/admin';
-import { CreditCard, Loader2, Zap, TrendingUp } from 'lucide-react';
+import { CreditCard, Loader2, Zap, TrendingUp, Download, History } from 'lucide-react';
 
 const PLAN_LABELS: Record<string, string> = {
     free: 'Free',
@@ -29,7 +29,7 @@ const USAGE_LABELS: Record<string, string> = {
     team: 'Сотрудники',
 };
 
-function UsageBar({ label, item }: { label: string; item: UsageItem }) {
+function UsageBar({ label, item }: { label: string; item: any }) {
     const percent = item.limit > 0
         ? Math.min(100, Math.round((item.used / item.limit) * 100))
         : 0;
@@ -53,10 +53,10 @@ function UsageBar({ label, item }: { label: string; item: UsageItem }) {
             <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                 <div
                     className={`h-full rounded-full transition-all duration-500 ${isCritical
-                            ? 'bg-red-500'
-                            : isWarning
-                                ? 'bg-amber-400'
-                                : 'bg-primary-500'
+                        ? 'bg-red-500'
+                        : isWarning
+                            ? 'bg-amber-400'
+                            : 'bg-primary-500'
                         }`}
                     style={{ width: `${percent}%` }}
                 />
@@ -68,13 +68,19 @@ function UsageBar({ label, item }: { label: string; item: UsageItem }) {
 export default function TenantBilling() {
     const [data, setData] = useState<BillingData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [requesting, setRequesting] = useState(false);
     const [error, setError] = useState('');
 
-    const loadBilling = useCallback(async () => {
+    const loadData = useCallback(async () => {
         try {
             setLoading(true);
-            const result = await getBilling();
-            setData(result);
+            const [billingRes, invoicesRes] = await Promise.all([
+                getBilling(),
+                getInvoices()
+            ]);
+            setData(billingRes);
+            setInvoices(invoicesRes.data || []);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -82,9 +88,22 @@ export default function TenantBilling() {
         }
     }, []);
 
+    const handleCreateInvoice = async (plan: string, months: number, amount: number) => {
+        try {
+            setRequesting(true);
+            await createInvoice({ plan, months, amount });
+            loadData();
+            alert('Счет успешно создан! Вы можете скачать его в истории платежей.');
+        } catch (err: any) {
+            alert('Ошибка: ' + err.message);
+        } finally {
+            setRequesting(false);
+        }
+    };
+
     useEffect(() => {
-        loadBilling();
-    }, [loadBilling]);
+        loadData();
+    }, [loadData]);
 
     if (loading) {
         return (
@@ -155,7 +174,7 @@ export default function TenantBilling() {
                         <UsageBar
                             key={key}
                             label={USAGE_LABELS[key] || key}
-                            item={item}
+                            item={item as UsageItem}
                         />
                     ))}
                 </div>
@@ -171,8 +190,8 @@ export default function TenantBilling() {
                             <div
                                 key={plan}
                                 className={`rounded-2xl border p-5 transition-all duration-200 ${isCurrent
-                                        ? 'border-primary-500 bg-primary-50/30 ring-2 ring-primary-200'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-primary-500 bg-primary-50/30 ring-2 ring-primary-200'
+                                    : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 <div className="flex items-center justify-between mb-3">
@@ -208,13 +227,65 @@ export default function TenantBilling() {
                                     {plan === 'enterprise' && <li>White-label</li>}
                                 </ul>
                                 {!isCurrent && (
-                                    <button className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-full text-sm shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300">
-                                        Сменить на {PLAN_LABELS[plan]}
+                                    <button
+                                        onClick={() => handleCreateInvoice(plan, plan === 'pro' ? 12 : 6, plan === 'pro' ? 24000 : 90000)}
+                                        disabled={requesting}
+                                        className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-full text-sm shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50"
+                                    >
+                                        {requesting ? 'Запрос...' : `Сменить на ${PLAN_LABELS[plan]}`}
                                     </button>
                                 )}
                             </div>
                         );
                     })}
+                </div>
+            </div>
+
+            {/* Invoices History */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+                <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <History className="w-5 h-5 text-primary-500" strokeWidth={1.5} />
+                        <h2 className="text-lg font-semibold text-gray-900">История счетов</h2>
+                    </div>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-100">
+                                <th className="px-6 py-4 font-semibold text-gray-900">№ Счета</th>
+                                <th className="px-6 py-4 font-semibold text-gray-900">Дата</th>
+                                <th className="px-6 py-4 font-semibold text-gray-900">Сумма</th>
+                                <th className="px-6 py-4 font-semibold text-gray-900">Статус</th>
+                                <th className="px-6 py-4 font-semibold text-gray-900"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {invoices.map((inv: any) => (
+                                <tr key={inv.id}>
+                                    <td className="px-6 py-4 font-medium text-gray-900">{inv.invoice_number}</td>
+                                    <td className="px-6 py-4 text-gray-500">
+                                        {new Date(inv.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-900">{Number(inv.amount).toLocaleString()} ₽</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${inv.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                            }`}>
+                                            {inv.status === 'paid' ? 'Оплачен' : 'Ожидает'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="p-2 text-gray-400 hover:text-primary-600 transition-colors">
+                                            <Download className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {invoices.length === 0 && (
+                        <div className="py-12 text-center text-gray-400">История платежей пуста</div>
+                    )}
                 </div>
             </div>
         </div>

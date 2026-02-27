@@ -8,7 +8,7 @@ import {
     getDashboardMetrics, updateDialogRating, addWorkType,
     getBranding, updateBranding,
     getTeamMembers, addTeamMember, updateTeamMember, removeTeamMember,
-    getBilling,
+    getBilling, updateDomain, verifyTenantDomain
 } from '../services/tenantAdminService'
 import { tenantResolver, getTenantId } from '../middleware/tenantResolver'
 import { authGuard } from '../middleware/authGuard'
@@ -372,5 +372,23 @@ export async function adminRoutes(fastify: FastifyInstance) {
         })
 
         return reply.send(invoice)
+    })
+
+    // ---------- Domain Settings ----------
+    fastify.put('/api/t/:slug/admin/settings/domain', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { domain } = req.body as { domain: string }
+        await updateDomain(tenantId, domain)
+        return reply.send({ success: true })
+    })
+
+    fastify.post('/api/t/:slug/admin/settings/domain/verify', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const result = await verifyTenantDomain(tenantId)
+        return reply.send(result)
     })
 }

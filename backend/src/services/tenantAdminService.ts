@@ -10,7 +10,7 @@ const BCRYPT_ROUNDS = 12
 
 export async function getBotPersonality(tenantId: string) {
     const res = await pool.query(
-        `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons, system_prompt_override, funnel_steps
+        `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons, system_prompt_override, funnel_steps, is_white_label
          FROM tenant_bot_settings WHERE tenant_id = $1`,
         [tenantId]
     )
@@ -25,6 +25,7 @@ export async function getBotPersonality(tenantId: string) {
         welcomeMessage: row.welcome_message,
         quickButtons: row.quick_buttons || [],
         funnelSteps: row.funnel_steps || null,
+        isWhiteLabel: row.is_white_label || false,
     }
 }
 
@@ -37,6 +38,7 @@ export async function updateBotPersonality(
         welcomeMessage?: string
         quickButtons?: any[]
         funnelSteps?: any[]
+        isWhiteLabel?: boolean
     }
 ) {
     await pool.query(
@@ -47,6 +49,7 @@ export async function updateBotPersonality(
              welcome_message = COALESCE($5, welcome_message),
              quick_buttons = COALESCE($6, quick_buttons),
              funnel_steps = COALESCE($7, funnel_steps),
+             is_white_label = COALESCE($8, is_white_label),
              updated_at = NOW()
          WHERE tenant_id = $1`,
         [
@@ -57,8 +60,33 @@ export async function updateBotPersonality(
             data.welcomeMessage || null,
             data.quickButtons ? JSON.stringify(data.quickButtons) : null,
             data.funnelSteps ? JSON.stringify(data.funnelSteps) : null,
+            data.isWhiteLabel !== undefined ? data.isWhiteLabel : null
         ]
     )
+}
+
+export async function updateDomain(tenantId: string, domain: string | null) {
+    await pool.query(
+        `UPDATE tenants SET custom_domain = $1, dns_status = 'pending' WHERE id = $2`,
+        [domain, tenantId]
+    );
+}
+
+export async function verifyTenantDomain(tenantId: string) {
+    const res = await pool.query('SELECT custom_domain FROM tenants WHERE id = $1', [tenantId]);
+    const domain = res.rows[0]?.custom_domain;
+    if (!domain) throw new Error('No custom domain set');
+
+    const { dnsService } = await import('./dnsService');
+    const verification = await dnsService.verifyDomain(domain);
+
+    if (verification.success) {
+        await pool.query("UPDATE tenants SET dns_status = 'verified' WHERE id = $1", [tenantId]);
+        return { success: true };
+    } else {
+        await pool.query("UPDATE tenants SET dns_status = 'failed' WHERE id = $1", [tenantId]);
+        return { success: false, error: verification.error };
+    }
 }
 
 // ============================================================

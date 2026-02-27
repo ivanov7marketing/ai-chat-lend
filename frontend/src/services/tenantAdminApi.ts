@@ -85,6 +85,17 @@ export async function getBilling(): Promise<BillingData> {
     return apiFetch<BillingData>(`${getAdminBase()}/billing`);
 }
 
+export async function getInvoices(): Promise<{ data: any[] }> {
+    return apiFetch<{ data: any[] }>(`${getAdminBase()}/billing/invoices`);
+}
+
+export async function createInvoice(data: { plan: string; months: number; amount: number }): Promise<any> {
+    return apiFetch<any>(`${getAdminBase()}/billing/invoices`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
+}
+
 // ============ File Uploads ============
 
 export async function uploadFile(file: File): Promise<{ key: string, url: string }> {
@@ -105,5 +116,32 @@ export async function uploadFile(file: File): Promise<{ key: string, url: string
         throw new Error(`Upload error ${res.status}: ${text}`);
     }
 
+    return res.json();
+}
+
+// ============ Settings & Domain ============
+
+export async function updateDomain(domain: string | null): Promise<void> {
+    const slug = localStorage.getItem('auth_slug') || '';
+    const token = getToken();
+    await fetch(`${API_BASE}/api/t/${slug}/admin/settings/domain`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ domain }),
+    });
+}
+
+export async function verifyDomain(): Promise<{ success: boolean; error?: string }> {
+    const slug = localStorage.getItem('auth_slug') || '';
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/api/t/${slug}/admin/settings/domain/verify`, {
+        method: 'POST',
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
     return res.json();
 }

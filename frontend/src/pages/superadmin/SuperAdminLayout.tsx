@@ -10,6 +10,7 @@ import {
 const NAV_ITEMS = [
     { to: '/admin', icon: LayoutDashboard, label: 'Дашборд', end: true },
     { to: '/admin/tenants', icon: Building2, label: 'Тенанты', end: false },
+    { to: '/admin/invoices', icon: ScrollText, label: 'Счета и оплаты', end: false },
     { to: '/admin/audit', icon: ScrollText, label: 'Аудит-лог', end: false },
 ]
 

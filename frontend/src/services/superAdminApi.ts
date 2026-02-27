@@ -111,3 +111,12 @@ export async function getAuditLog(
         return { data: [], total: 0 }
     }
 }
+// ============ Invoices ============
+
+export async function getAllInvoices(): Promise<{ data: any[] }> {
+    return adminFetch('/api/superadmin/invoices')
+}
+
+export async function markInvoicePaid(id: string): Promise<void> {
+    await adminFetch(`/api/superadmin/invoices/${id}/pay`, { method: 'PUT' })
+}

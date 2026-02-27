@@ -18,6 +18,7 @@ export interface TenantChatConfig {
             events?: Record<string, boolean>
         }
     }
+    isWhiteLabel?: boolean
 }
 
 interface ChatStore {

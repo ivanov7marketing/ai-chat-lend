@@ -288,6 +288,22 @@ export async function runMigrations() {
       ) THEN
         ALTER TABLE tenant_bot_settings ADD COLUMN funnel_steps JSONB;
       END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'tenants' AND column_name = 'custom_domain'
+      ) THEN
+        ALTER TABLE tenants ADD COLUMN custom_domain VARCHAR(255);
+        ALTER TABLE tenants ADD COLUMN dns_status VARCHAR(20) DEFAULT 'pending';
+        CREATE INDEX idx_tenants_domain ON tenants(custom_domain);
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'tenant_bot_settings' AND column_name = 'is_white_label'
+      ) THEN
+        ALTER TABLE tenant_bot_settings ADD COLUMN is_white_label BOOLEAN DEFAULT FALSE;
+      END IF;
     END $$;
 
     -- ============================================================
