@@ -2,6 +2,14 @@ import { create } from 'zustand'
 import { Message, ChatState, FunnelAnswers } from '../types/chat'
 import { FUNNEL_STEPS, WELCOME_MESSAGE } from '../config/funnel'
 import { submitLead as submitLeadApi } from '../services/api'
+import type { TenantSegment } from '../types/auth'
+
+export interface TenantChatConfig {
+    botName: string
+    welcomeMessage: string
+    quickButtons: string[]
+    segments: TenantSegment[]
+}
 
 interface ChatStore {
     isOpen: boolean
@@ -16,14 +24,37 @@ interface ChatStore {
     estimateMin: number
     estimateMax: number
     tenantSlug: string | null
+    tenantConfig: TenantChatConfig | null
     openChat: (initialQuestion?: string) => void
     closeChat: () => void
     sendUserMessage: (text: string) => Promise<void>
     _addBotMessage: (text: string) => void
     submitLead: (contactType: string, contactValue: string) => Promise<void>
     setTenantSlug: (slug: string) => void
+    setTenantConfig: (config: TenantChatConfig) => void
     socket: WebSocket | null
     connectWebSocket: () => void
+}
+
+// Default hardcoded rates as fallback when tenant config is not available
+const DEFAULT_RATES: Record<string, Record<string, [number, number | null]>> = {
+    cosmetic: {
+        'Эконом': [5000, 8000],
+        'Стандарт': [8000, 13000],
+    },
+    capitalNo: {
+        'Эконом': [17000, 25000],
+        'Стандарт': [25000, 35000],
+    },
+    capitalBasic: {
+        'Стандарт': [25000, 35000],
+        'Комфорт': [35000, 50000],
+    },
+    capitalFull: {
+        'Стандарт': [25000, 35000],
+        'Комфорт': [35000, 50000],
+        'Премиум': [50000, null],
+    },
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -39,6 +70,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     estimateMin: 0,
     estimateMax: 0,
     tenantSlug: null,
+    tenantConfig: null,
     socket: null,
 
     submitLead: async (contactType, contactValue) => {
@@ -62,11 +94,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         set({ tenantSlug: slug })
     },
 
+    setTenantConfig: (config: TenantChatConfig) => {
+        set({ tenantConfig: config })
+    },
+
     connectWebSocket: () => {
         const { tenantSlug } = get()
-        const wsBase = (import.meta as any).env.VITE_WS_URL || 'ws://localhost:3000'
-        const wsPath = tenantSlug ? `/ws/${tenantSlug}` : '/ws'
-        const socket = new WebSocket(`${wsBase}${wsPath}`)
+        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+        const host = window.location.host
+        const slug = tenantSlug || 'default'
+        const socket = new WebSocket(`${proto}://${host}/ws/${slug}`)
 
         socket.onopen = () => {
             console.log('WebSocket connected')
@@ -106,6 +143,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     openChat: (initialQuestion?: string) => {
+        const { tenantConfig } = get()
+        const welcomeMsg = tenantConfig?.welcomeMessage || WELCOME_MESSAGE
+
         set({
             isOpen: true,
             chatState: 'WELCOME',
@@ -115,7 +155,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             sessionId: null, // Will be set by WebSocket
         })
         get().connectWebSocket()
-        get()._addBotMessage(WELCOME_MESSAGE)
+        get()._addBotMessage(welcomeMsg)
         if (initialQuestion) {
             setTimeout(() => get().sendUserMessage(initialQuestion), 1200)
         }
@@ -138,7 +178,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
-        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket } = get()
+        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
 
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
@@ -196,39 +236,40 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     const repairType = a.repairType || 'Капитальный'
                     const design = a.design || 'Нет'
 
-                    // Определяем сегменты и ставки (руб/м²)
+                    // Determine which segments to show based on repairType/design
+                    let segmentNames: string[]
                     type RateMap = Record<string, [number, number | null]>
-                    let segments: string[]
                     let rates: RateMap
 
                     if (repairType === 'Косметический') {
-                        segments = ['Эконом', 'Стандарт']
-                        rates = {
-                            'Эконом': [5000, 8000],
-                            'Стандарт': [8000, 13000],
-                        }
+                        segmentNames = ['Эконом', 'Стандарт']
                     } else if (design === 'Нет') {
-                        segments = ['Эконом', 'Стандарт']
-                        rates = {
-                            'Эконом': [17000, 25000],
-                            'Стандарт': [25000, 35000],
-                        }
+                        segmentNames = ['Эконом', 'Стандарт']
                     } else if (design === 'Да, базовый') {
-                        segments = ['Стандарт', 'Комфорт']
-                        rates = {
-                            'Стандарт': [25000, 35000],
-                            'Комфорт': [35000, 50000],
-                        }
+                        segmentNames = ['Стандарт', 'Комфорт']
                     } else {
-                        segments = ['Стандарт', 'Комфорт', 'Премиум']
-                        rates = {
-                            'Стандарт': [25000, 35000],
-                            'Комфорт': [35000, 50000],
-                            'Премиум': [50000, null],
-                        }
+                        segmentNames = ['Стандарт', 'Комфорт', 'Премиум']
                     }
 
-                    set({ availableSegments: segments })
+                    // Use tenant segments if available, otherwise fallback to hardcoded rates
+                    if (tenantConfig?.segments && tenantConfig.segments.length > 0) {
+                        const tenantSegMap: RateMap = {}
+                        for (const seg of tenantConfig.segments) {
+                            tenantSegMap[seg.name] = [seg.priceRangeMin, seg.priceRangeMax]
+                        }
+                        // Filter to only segments that exist in tenant config
+                        const validNames = segmentNames.filter(n => n in tenantSegMap)
+                        if (validNames.length > 0) {
+                            segmentNames = validNames
+                            rates = tenantSegMap
+                        } else {
+                            rates = _getFallbackRates(repairType, design)
+                        }
+                    } else {
+                        rates = _getFallbackRates(repairType, design)
+                    }
+
+                    set({ availableSegments: segmentNames })
 
                     const fmt = (n: number) =>
                         Math.round((n * area) / 1000).toLocaleString('ru-RU') + ' тр.'
@@ -242,8 +283,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         ? 'косметический ремонт'
                         : 'капитальный ремонт'
 
-                    const priceLines = segments.map(seg => {
-                        const [min, max] = rates[seg]
+                    const priceLines = segmentNames.map(seg => {
+                        const rate = rates[seg]
+                        if (!rate) return `— ${seg}: уточняйте`
+                        const [min, max] = rate
                         if (max === null) return `— ${seg}: от ${fmt(min)}`
                         return `— ${seg}: ${fmt(min)} – ${fmt(max)}`
                     }).join('\n')
@@ -255,9 +298,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
                     set({ chatState: 'SEGMENT_CHOICE' })
 
-                    const minRates = segments.map(seg => rates[seg][0])
-                    const maxRates = segments.map(seg => rates[seg][1]).filter((r): r is number => r !== null)
-                    const rMin = Math.min(...minRates)
+                    const minRates = segmentNames.map(seg => rates[seg]?.[0] ?? 0).filter(r => r > 0)
+                    const maxRates = segmentNames.map(seg => rates[seg]?.[1]).filter((r): r is number => r !== null)
+                    const rMin = minRates.length > 0 ? Math.min(...minRates) : 0
                     const rMax = maxRates.length > 0 ? Math.max(...maxRates) : rMin * 1.5
                     set({ estimateMin: area * rMin, estimateMax: area * rMax })
 
@@ -296,3 +339,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
     },
 }))
+
+/** Helper: get fallback hardcoded rates based on repair type and design */
+function _getFallbackRates(repairType: string, design: string): Record<string, [number, number | null]> {
+    if (repairType === 'Косметический') return DEFAULT_RATES.cosmetic
+    if (design === 'Нет') return DEFAULT_RATES.capitalNo
+    if (design === 'Да, базовый') return DEFAULT_RATES.capitalBasic
+    return DEFAULT_RATES.capitalFull
+}

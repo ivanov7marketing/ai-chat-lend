@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { X, Bot, SendHorizonal } from 'lucide-react'
 import { useChatStore } from '../../store/chatStore'
-import { FUNNEL_STEPS, WELCOME_QUICK_BUTTONS } from '../../config/funnel'
+import { FUNNEL_STEPS } from '../../config/funnel'
+import { useTenant } from '../../contexts/TenantContext'
 import MessageBubble from './MessageBubble'
 import QuickButtons from './QuickButtons'
 import ProgressBar from './ProgressBar'
 import TypingIndicator from './TypingIndicator'
 
 export default function ChatWindow() {
+    const tenant = useTenant()
     const {
         chatState,
         messages,
@@ -18,6 +20,7 @@ export default function ChatWindow() {
         availableSegments,
         sendUserMessage,
         closeChat,
+        tenantConfig,
     } = useChatStore()
 
     const [inputValue, setInputValue] = useState('')
@@ -33,12 +36,21 @@ export default function ChatWindow() {
     const lastMessageIsBot = lastMessage?.role === 'bot'
     const canShowButtons = lastMessageIsBot && !isTyping
 
+    // Quick buttons: use tenant config if available, otherwise fallback
+    const welcomeButtons = tenantConfig?.quickButtons || [
+        '🧮 Рассчитать стоимость ремонта',
+        '📅 Узнать сроки ремонта',
+        '🏢 О компании и гарантиях',
+        '💡 Советы по ремонту',
+        '❓ Задать свой вопрос',
+    ]
+
     const showQuickButtons =
         (chatState === 'WELCOME' && canShowButtons) ||
         (chatState === 'FUNNEL' && currentStep?.type === 'buttons' && canShowButtons)
 
     const currentButtons =
-        chatState === 'WELCOME' ? WELCOME_QUICK_BUTTONS : currentStep?.options ?? []
+        chatState === 'WELCOME' ? welcomeButtons : currentStep?.options ?? []
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
@@ -64,6 +76,9 @@ export default function ChatWindow() {
         }
     }
 
+    // Bot display name and avatar from tenant config
+    const botName = tenant.bot.name || 'Макс'
+    const botAvatarUrl = tenant.bot.avatarUrl
 
     return (
         <div
@@ -81,13 +96,21 @@ export default function ChatWindow() {
                 {/* Header */}
                 <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 flex-shrink-0">
                     <div className="relative">
-                        <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-500">
-                            <Bot size={20} strokeWidth={1.5} />
-                        </div>
+                        {botAvatarUrl ? (
+                            <img
+                                src={botAvatarUrl}
+                                alt={botName}
+                                className="w-10 h-10 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-500">
+                                <Bot size={20} strokeWidth={1.5} />
+                            </div>
+                        )}
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
                     </div>
                     <div>
-                        <p className="font-semibold text-gray-900 text-sm">Макс</p>
+                        <p className="font-semibold text-gray-900 text-sm">{botName}</p>
                         <p className="text-xs text-gray-400">AI-эксперт по ремонту</p>
                     </div>
                     <button

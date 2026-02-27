@@ -18,15 +18,25 @@ const EXAMPLE_QUESTIONS = [
 
 function TenantLandingContent() {
     const tenant = useTenant()
-    const { openChat, isOpen, setTenantSlug } = useChatStore()
+    const { openChat, isOpen, setTenantSlug, setTenantConfig } = useChatStore()
     const { slug } = useParams<{ slug: string }>()
 
-    // Set tenant slug in chat store for WebSocket routing
+    // Set tenant slug and config in chat store
     React.useEffect(() => {
         if (slug && setTenantSlug) {
             setTenantSlug(slug)
         }
-    }, [slug, setTenantSlug])
+        if (tenant && setTenantConfig) {
+            setTenantConfig({
+                botName: tenant.bot.name,
+                welcomeMessage: tenant.bot.welcomeMessage,
+                quickButtons: tenant.bot.quickButtons.map(
+                    (b) => `${b.emoji} ${b.text}`
+                ),
+                segments: tenant.segments,
+            })
+        }
+    }, [slug, tenant, setTenantSlug, setTenantConfig])
 
     // Dynamic CSS vars from tenant branding
     const brandStyle = {

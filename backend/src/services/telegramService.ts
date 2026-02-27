@@ -1,24 +1,54 @@
 import dotenv from 'dotenv'
+import { pool } from '../db/client'
+
 dotenv.config()
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
+const GLOBAL_TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+const GLOBAL_TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 
-export async function sendTelegramNotification(text: string) {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+export async function sendTelegramNotification(text: string, tenantId?: string) {
+    let botToken = GLOBAL_TELEGRAM_BOT_TOKEN
+    let chatId = GLOBAL_TELEGRAM_CHAT_ID
+
+    // Try to load tenant-specific Telegram credentials
+    if (tenantId) {
+        try {
+            const res = await pool.query(
+                `SELECT telegram_bot_token, telegram_chat_id
+                 FROM tenant_integrations WHERE tenant_id = $1`,
+                [tenantId]
+            )
+            if (res.rows.length > 0) {
+                const row = res.rows[0]
+                if (row.telegram_bot_token && row.telegram_chat_id) {
+                    botToken = row.telegram_bot_token
+                    chatId = row.telegram_chat_id
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to load tenant Telegram config, using global:', err)
+        }
+    }
+
+    if (!botToken || !chatId) {
         console.warn('Telegram not configured, skipping notification')
         return
     }
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`
-    await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text,
-            parse_mode: 'HTML',
-        }),
-    })
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text,
+                parse_mode: 'HTML',
+            }),
+        })
+    } catch (err) {
+        console.error('Telegram notification error:', err)
+    }
 }
 
 export function formatLeadMessage(data: {
