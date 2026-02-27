@@ -1,5 +1,6 @@
 import { pool } from '../db/client'
 import { searchKnowledge } from './ragService'
+import { checkLimit } from './limitsService'
 
 export async function handleFreeChat(tenantId: string, sessionId: string, message: string): Promise<string | null> {
     try {
@@ -66,14 +67,20 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
 
         const messages = [
             { role: 'system', content: systemPrompt },
-            ...dbHistory.map(m => ({
+            ...dbHistory.map((m: any) => ({
                 role: m.role === 'bot' ? 'assistant' : 'user', // Map our 'bot' to OpenAI 'assistant'
                 content: m.content
             })),
             { role: 'user', content: message }
         ]
 
-        // 6. Call RouterAI Chat Completions
+        // 6. Check token limit before calling
+        const limitCheck = await checkLimit(tenantId, 'tokens')
+        if (!limitCheck.allowed) {
+            return 'Извините, лимит умных ответов на этот месяц исчерпан. Пожалуйста, обратитесь к менеджеру напрямую.'
+        }
+
+        // 7. Call RouterAI Chat Completions
         const url = process.env.ROUTERAI_BASE_URL || 'https://api.routerai.ru/v1'
         const response = await fetch(`${url}/chat/completions`, {
             method: 'POST',
@@ -96,6 +103,14 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         }
 
         const data = await response.json()
+
+        // 8. Increment Tokens Used
+        if (data.usage && data.usage.total_tokens) {
+            const { incrementTenantUsage } = await import('./sessionService')
+            // Using total_tokens for billing
+            await incrementTenantUsage(tenantId, 'tokens_used', data.usage.total_tokens)
+        }
+
         const reply = data.choices?.[0]?.message?.content || 'Не смог сформулировать ответ.'
         return reply
 

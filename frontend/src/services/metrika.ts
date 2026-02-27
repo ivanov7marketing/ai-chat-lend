@@ -27,8 +27,14 @@ export function initMetrika(counterId: string) {
     console.log(`[Metrika] Initialized counter ${counterId}`)
 }
 
-export function reachGoal(counterId: string | undefined, goalName: string) {
+export function reachGoal(counterId: string | undefined, goalName: string, events?: Record<string, boolean>) {
     if (!counterId) return
+
+    // If events config is provided and this specific goal is strictly set to false, do not fire
+    if (events && events[goalName] === false) {
+        console.log(`[Metrika] Goal skipped by tenant settings: ${goalName}`)
+        return
+    }
 
     try {
         if (typeof (window as any).ym === 'function') {

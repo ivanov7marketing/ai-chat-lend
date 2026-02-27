@@ -1,4 +1,5 @@
 import { pool } from '../db/client'
+import { PLAN_LIMITS } from '../config/limits'
 import bcrypt from 'bcrypt'
 
 const BCRYPT_ROUNDS = 12
@@ -335,6 +336,33 @@ export async function testIntegration(tenantId: string, service: string) {
         return { success: true, message: 'API-ключ настроен (проверка подключения в разработке)' }
     }
 
+    if (service === 'amoCRM') {
+        if (!row.amocrm_webhook_url) {
+            return { success: false, message: 'Укажите Webhook URL' }
+        }
+        try {
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+            if (row.amocrm_api_key) {
+                headers['Authorization'] = `Bearer ${row.amocrm_api_key}`
+            }
+            const resp = await fetch(row.amocrm_webhook_url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify([{
+                    name: 'Тестовая сделка от AI Max Platform',
+                    price: 100000
+                }])
+            })
+            if (resp.ok) {
+                return { success: true, message: 'Тестовый webhook успешно отправлен!' }
+            }
+            const errText = await resp.text()
+            return { success: false, message: `Ошибка webhook (${resp.status}): ${errText.substring(0, 100)}` }
+        } catch (err: any) {
+            return { success: false, message: `Ошибка сети: ${err.message}` }
+        }
+    }
+
     return { success: true, message: 'Подключение настроено' }
 }
 
@@ -343,7 +371,7 @@ export async function testIntegration(tenantId: string, service: string) {
 // ============================================================
 
 export async function getDashboardMetrics(tenantId: string) {
-    const [sessionsRes, leadsRes, messagesRes, todayRes] = await Promise.all([
+    const [sessionsRes, leadsRes, messagesRes, funnelStartRes, funnelEndRes] = await Promise.all([
         pool.query(
             `SELECT COUNT(*)::int AS total FROM sessions WHERE tenant_id = $1`,
             [tenantId]
@@ -358,9 +386,20 @@ export async function getDashboardMetrics(tenantId: string) {
              WHERE s.tenant_id = $1`,
             [tenantId]
         ),
+        // Started funnel: User answered first question (area)
         pool.query(
-            `SELECT COUNT(*)::int AS total FROM sessions
-             WHERE tenant_id = $1 AND created_at >= CURRENT_DATE`,
+            `SELECT COUNT(DISTINCT s.id)::int AS total FROM sessions s
+             JOIN messages m ON s.id = m.session_id
+             WHERE s.tenant_id = $1 AND m.role = 'user' AND s.id IN (
+                SELECT session_id FROM messages WHERE role = 'bot' AND content LIKE '%площадь%'
+             )`,
+            [tenantId]
+        ),
+        // Completed funnel: User was offered segment choice (bot message "подходит?")
+        pool.query(
+            `SELECT COUNT(DISTINCT s.id)::int AS total FROM sessions s
+             JOIN messages m ON s.id = m.session_id
+             WHERE s.tenant_id = $1 AND m.role = 'bot' AND (m.content LIKE '%подходит?%' OR m.content LIKE '%вариант%')`,
             [tenantId]
         ),
     ])
@@ -368,7 +407,8 @@ export async function getDashboardMetrics(tenantId: string) {
     const totalSessions = sessionsRes.rows[0].total
     const totalLeads = leadsRes.rows[0].total
     const totalMessages = messagesRes.rows[0].total
-    const todaySessions = todayRes.rows[0].total
+    const estimateStarted = funnelStartRes.rows[0].total
+    const estimateCompleted = funnelEndRes.rows[0].total
 
     // Conversion rate
     const conversionRate = totalSessions > 0
@@ -383,8 +423,8 @@ export async function getDashboardMetrics(tenantId: string) {
     return {
         totalVisits: totalSessions,
         chatOpened: totalSessions,
-        estimateStarted: Math.round(totalSessions * 0.7),
-        estimateCompleted: totalLeads,
+        estimateStarted,
+        estimateCompleted,
         leadsCreated: totalLeads,
         conversionRate,
         avgDialogDuration: avgMessages > 0
@@ -595,11 +635,8 @@ export async function removeTeamMember(tenantId: string, userId: string) {
 // Billing
 // ============================================================
 
-const PLAN_LIMITS: Record<string, Record<string, number>> = {
-    free: { sessions: 50, messages: 500, leads: 10, tokens: 10000, team: 1 },
-    pro: { sessions: 1000, messages: 10000, leads: 200, tokens: 500000, team: 3 },
-    enterprise: { sessions: 999999, messages: 999999, leads: 999999, tokens: 999999, team: 999 },
-}
+// (PLAN_LIMITS is imported from ../config/limits)
+
 
 export async function getBilling(tenantId: string) {
     const [tenantRes, usageRes] = await Promise.all([
@@ -644,5 +681,5 @@ export async function getBilling(tenantId: string) {
             tokens: { used: Number(usage.tokens_used), limit: limits.tokens },
             team: { used: teamCount + 1, limit: limits.team }, // +1 for owner
         },
-    }
+    } as any // Cast for simplicity or define full interface
 }

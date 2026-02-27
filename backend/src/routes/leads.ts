@@ -5,20 +5,24 @@ import { updateSessionStatus, incrementTenantUsage } from '../services/sessionSe
 import { generateEstimateHtml } from '../services/pdfTemplateService'
 import { generatePdfFromHtml } from '../services/pdfGenerator'
 import { createEstimate } from '../services/estimateService'
+import { sendLeadToAmoCRM } from '../services/amocrmService'
+
+interface ApartmentParams {
+    area: string
+    rooms: string
+    repairType: string
+    design?: string
+    condition?: string
+    ceilingHeight?: string
+    wallMaterial?: string
+    blueprint?: string
+}
 
 interface LeadBody {
     sessionId: string
     contactType: string
     phone: string
-    apartmentParams: {
-        area: string
-        rooms: string
-        repairType: string
-        design?: string
-        condition?: string
-        ceilingHeight?: string
-        wallMaterial?: string
-    }
+    apartmentParams: ApartmentParams
     selectedSegment: string
     estimateMin: number
     estimateMax: number
@@ -92,6 +96,17 @@ export async function leadsRoutes(fastify: FastifyInstance) {
             sessionId,
         })
         await sendTelegramNotification(message, tenantId || undefined)
+
+        // Отправить лид в amoCRM асинхронно
+        sendLeadToAmoCRM(tenantId, {
+            phone,
+            contactType,
+            apartmentParams,
+            selectedSegment,
+            estimateMin,
+            estimateMax,
+            sessionId
+        }).catch(err => console.error('Error sending lead to amoCRM:', err))
 
         // Асинхронно генерируем PDF (основной ответ уже отдан, но можно и дождаться)
         try {

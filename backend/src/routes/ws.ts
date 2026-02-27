@@ -3,6 +3,7 @@ import { WebSocket } from 'ws'
 import { createSession, saveMessage } from '../services/sessionService'
 import { pool } from '../db/client'
 import { handleFreeChat } from '../services/chatService'
+import { checkLimit } from '../services/limitsService'
 
 export async function wsRoutes(fastify: FastifyInstance) {
     // ============================================================
@@ -106,6 +107,14 @@ export async function wsRoutes(fastify: FastifyInstance) {
                         isAdmin = true
                         socket.send(JSON.stringify({ type: 'admin_ready' }))
                     } else {
+                        // Create session only if limits allow
+                        const limitCheck = await checkLimit(tenantId || '', 'sessions')
+                        if (!limitCheck.allowed) {
+                            socket.send(JSON.stringify({ type: 'error', message: limitCheck.reason || 'Лимит сессий исчерпан' }))
+                            socket.close()
+                            return
+                        }
+
                         // Auto-create session for user widget
                         const utmSource = (req.query as Record<string, string>).utm_source
                         const device = req.headers['user-agent'] || 'unknown'

@@ -2,17 +2,18 @@ import { pool } from '../db/client'
 
 export async function incrementTenantUsage(
     tenantId: string,
-    metric: 'sessions_count' | 'messages_count' | 'leads_count'
+    metric: 'sessions_count' | 'messages_count' | 'leads_count' | 'tokens_used',
+    value: number = 1
 ) {
     if (!tenantId) return
 
     // Month truncated to start of month
     await pool.query(
         `INSERT INTO tenant_usage (tenant_id, month, ${metric})
-         VALUES ($1, date_trunc('month', NOW()), 1)
+         VALUES ($1, date_trunc('month', NOW()), $2)
          ON CONFLICT (tenant_id, month)
-         DO UPDATE SET ${metric} = tenant_usage.${metric} + 1`,
-        [tenantId]
+         DO UPDATE SET ${metric} = tenant_usage.${metric} + $2`,
+        [tenantId, value]
     )
 }
 

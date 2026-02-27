@@ -13,6 +13,7 @@ export interface TenantChatConfig {
     integrations?: {
         yandexMetrika?: {
             counterId: string
+            events?: Record<string, boolean>
         }
     }
 }
@@ -186,7 +187,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         get().connectWebSocket()
         get()._addBotMessage(welcomeMsg)
 
-        reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'chat_opened')
+        reachGoal(
+            tenantConfig?.integrations?.yandexMetrika?.counterId,
+            'chat_opened',
+            tenantConfig?.integrations?.yandexMetrika?.events
+        )
 
         if (initialQuestion) {
             setTimeout(() => get().sendUserMessage(initialQuestion), 1200)
@@ -227,7 +232,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (chatState === 'WELCOME') {
             if (text.startsWith('🧮')) {
                 set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
-                reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'estimate_started')
+                reachGoal(
+                    tenantConfig?.integrations?.yandexMetrika?.counterId,
+                    'estimate_started',
+                    tenantConfig?.integrations?.yandexMetrika?.events
+                )
                 setTimeout(() => {
                     _addBotMessage(FUNNEL_STEPS[0].question)
                 }, 800)
@@ -333,7 +342,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         `Какой вариант больше подходит? Отправлю детальную смету 👇`
 
                     set({ chatState: 'SEGMENT_CHOICE' })
-                    reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'estimate_completed')
+                    reachGoal(
+                        tenantConfig?.integrations?.yandexMetrika?.counterId,
+                        'estimate_completed',
+                        tenantConfig?.integrations?.yandexMetrika?.events
+                    )
 
                     const minRates = segmentNames.map(seg => rates[seg]?.[0] ?? 0).filter(r => r > 0)
                     const maxRates = segmentNames.map(seg => rates[seg]?.[1]).filter((r): r is number => r !== null)
@@ -361,7 +374,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const updatedAnswers = { ...funnelAnswers, phone: text }
             set({ funnelAnswers: updatedAnswers })
             await get().submitLead('phone', text)
-            reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'lead_created')
+            reachGoal(
+                tenantConfig?.integrations?.yandexMetrika?.counterId,
+                'lead_created',
+                tenantConfig?.integrations?.yandexMetrika?.events
+            )
             set({ chatState: 'FREE_CHAT' })
             setTimeout(() => _addBotMessage(
                 'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'
