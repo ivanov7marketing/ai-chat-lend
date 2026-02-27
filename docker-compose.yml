@@ -55,6 +55,16 @@ services:
     networks:
       - chatbot_net
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: always
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_data:/qdrant/storage
+    networks:
+      - chatbot_net
+
 networks:
   chatbot_net:
     driver: bridge
