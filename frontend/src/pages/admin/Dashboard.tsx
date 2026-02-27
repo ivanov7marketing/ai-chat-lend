@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getDashboardMetrics, getFunnelData, getSegmentsData } from '../../services/adminApi';
 import type { DashboardMetrics } from '../../types/admin';
 import {
@@ -31,6 +31,7 @@ const METRIC_CARDS = [
 ] as const;
 
 export default function Dashboard() {
+    const { slug } = useParams<{ slug: string }>();
     const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
     const [funnelData, setFunnelData] = useState<{ name: string, value: number }[]>([]);
     const [segmentsData, setSegmentsData] = useState<{ name: string, value: number }[]>([]);
@@ -245,13 +246,13 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-3">
                     <Link
-                        to="/admin/dialogs"
+                        to={`/${slug}/admin/dialogs`}
                         className="inline-flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-full shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 text-sm"
                     >
                         Диалоги →
                     </Link>
                     <Link
-                        to="/admin/bot"
+                        to={`/${slug}/admin/bot`}
                         className="inline-flex items-center px-4 py-2 bg-primary-500 text-white font-medium rounded-full shadow-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md text-sm"
                     >
                         Настройки бота →

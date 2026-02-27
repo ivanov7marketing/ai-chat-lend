@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { getDialogs } from '../../services/adminApi';
 import type { DialogSession, DialogFilters } from '../../types/admin';
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -28,6 +28,7 @@ const RATING_ICONS: Record<string, string> = {
 const PAGE_SIZE = 20;
 
 export default function DialogsList() {
+    const { slug } = useParams<{ slug: string }>();
     const [dialogs, setDialogs] = useState<DialogSession[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -79,8 +80,8 @@ export default function DialogsList() {
                                 key={d.key}
                                 onClick={() => setFilters((f) => ({ ...f, dateRange: d.key }))}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${filters.dateRange === d.key
-                                        ? 'bg-white text-gray-900 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {d.label}
@@ -95,8 +96,8 @@ export default function DialogsList() {
                                 key={s.key}
                                 onClick={() => { setFilters((f) => ({ ...f, status: s.key as DialogFilters['status'] })); setPage(0); }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${filters.status === s.key
-                                        ? 'bg-white text-gray-900 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {s.label}
@@ -185,7 +186,7 @@ export default function DialogsList() {
                                         </td>
                                         <td className="px-4 py-3.5">
                                             <Link
-                                                to={`/admin/dialogs/${d.id}`}
+                                                to={`/${slug}/admin/dialogs/${d.id}`}
                                                 className="text-primary-600 hover:text-primary-700 font-medium text-xs transition-colors"
                                             >
                                                 Открыть →

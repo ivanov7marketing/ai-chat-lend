@@ -124,7 +124,7 @@ export default function DialogDetail() {
         return (
             <div className="p-8 text-center">
                 <div className="text-red-500 font-medium mb-2">Диалог не найден</div>
-                <Link to="/admin/dialogs" className="text-primary-600 hover:text-primary-700 text-sm">
+                <Link to={`/${tenant?.slug}/admin/dialogs`} className="text-primary-600 hover:text-primary-700 text-sm">
                     ← Вернуться к списку
                 </Link>
             </div>
@@ -144,7 +144,7 @@ export default function DialogDetail() {
                 {/* Header */}
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-4 bg-white">
                     <Link
-                        to="/admin/dialogs"
+                        to={`/${tenant?.slug}/admin/dialogs`}
                         className="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors text-sm"
                     >
                         <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
