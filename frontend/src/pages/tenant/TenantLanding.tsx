@@ -29,12 +29,15 @@ function TenantLandingContent() {
         }
         if (tenant && setTenantConfig) {
             setTenantConfig({
-                botName: tenant.bot.name,
+                botName: tenant.bot.name || 'Макс',
+                avatarUrl: tenant.bot.avatarUrl || null,
                 welcomeMessage: tenant.bot.welcomeMessage,
-                quickButtons: tenant.bot.quickButtons.map(
-                    (b) => `${b.emoji} ${b.text}`
-                ),
-                segments: tenant.segments,
+                quickButtons: tenant.bot.quickButtons?.map(
+                    (b: any) => `${b.emoji} ${b.text}`
+                ) || [],
+                segments: tenant.segments || [],
+                funnelSteps: tenant.bot.funnelSteps || null,
+                isWhiteLabel: tenant.bot.isWhiteLabel,
                 integrations: tenant.integrations,
             })
 

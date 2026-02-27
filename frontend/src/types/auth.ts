@@ -48,6 +48,7 @@ export interface TenantBranding {
     footerText: string
     faviconUrl: string | null
     metaDescription: string
+    customDomain?: string | null
 }
 
 export interface TenantBotConfig {
@@ -57,6 +58,8 @@ export interface TenantBotConfig {
     language: 'ru' | 'en'
     welcomeMessage: string
     quickButtons: TenantQuickButton[]
+    funnelSteps?: any[] | null
+    isWhiteLabel?: boolean
 }
 
 export interface TenantQuickButton {
