@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getDialogDetail, updateDialogRating } from '../../services/adminApi';
+import { getDialogDetail, updateDialogRating, addQAPair } from '../../services/adminApi';
 import type { DialogDetailData, DialogRating } from '../../types/admin';
-import { ArrowLeft, User, Bot, Headset, CheckCircle, XCircle, AlertTriangle, RefreshCw, SendHorizonal } from 'lucide-react';
+import { ArrowLeft, User, Bot, Headset, CheckCircle, XCircle, AlertTriangle, RefreshCw, SendHorizonal, BrainCircuit } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext';
 
 const RATINGS: { key: DialogRating; icon: typeof CheckCircle; label: string; emoji: string; color: string }[] = [
@@ -21,6 +21,7 @@ export default function DialogDetail() {
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [isHumanManaged, setIsHumanManaged] = useState(false);
+    const [kbModal, setKbModal] = useState<{ isOpen: boolean; question: string; answer: string; saving: boolean } | null>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -81,6 +82,31 @@ export default function DialogDetail() {
         if (!id) return;
         setActiveRating(rating);
         await updateDialogRating(id, rating);
+    };
+
+    const handleAddToKB = (msgIndex: number) => {
+        const msg = data?.messages[msgIndex];
+        const prevMsg = data?.messages[msgIndex - 1]; // Try to find what preceded it
+        if (!msg) return;
+        setKbModal({
+            isOpen: true,
+            question: prevMsg?.role === 'user' ? prevMsg.content : '',
+            answer: msg.content,
+            saving: false
+        });
+    };
+
+    const submitKB = async () => {
+        if (!kbModal || !kbModal.question || !kbModal.answer) return;
+        setKbModal({ ...kbModal, saving: true });
+        try {
+            await addQAPair(kbModal.question, kbModal.answer);
+            setKbModal(null);
+            alert('Успешно добавлено в базу знаний!');
+        } catch (e) {
+            alert('Ошибка при сохранении');
+            setKbModal({ ...kbModal, saving: false });
+        }
     };
 
     if (loading) {
@@ -149,16 +175,27 @@ export default function DialogDetail() {
                                             <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
                                         </div>
                                     )}
-                                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${cfg.bubble}`}>
+                                    <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${cfg.bubble} relative group`}>
                                         {role === 'manager' && (
                                             <div className="text-xs font-medium mb-1 opacity-80">Менеджер</div>
                                         )}
                                         <div className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</div>
-                                        <div className={`text-[10px] mt-1.5 text-right ${cfg.time}`}>
-                                            {new Date(m.created_at).toLocaleTimeString('ru-RU', {
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                            })}
+                                        <div className={`text-[10px] mt-1.5 text-right ${cfg.time} flex items-center justify-between`}>
+                                            {role !== 'user' && (
+                                                <button
+                                                    onClick={() => handleAddToKB(data.messages.indexOf(m))}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-black/5 rounded-md"
+                                                    title="Добавить в базу знаний"
+                                                >
+                                                    <BrainCircuit size={14} />
+                                                </button>
+                                            )}
+                                            <span>
+                                                {new Date(m.created_at).toLocaleTimeString('ru-RU', {
+                                                    hour: '2-digit',
+                                                    minute: '2-digit',
+                                                })}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -332,6 +369,58 @@ export default function DialogDetail() {
                     </div>
                 )}
             </div>
+
+            {/* Smart RAG Training Modal */}
+            {kbModal?.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100">
+                        <div className="p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <BrainCircuit className="text-primary-500" />
+                                Обучение бота (Smart RAG)
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">Добавьте этот ответ в базу знаний, чтобы бот мог использовать его в будущем.</p>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Вопрос (на что отвечаем)</label>
+                                <textarea
+                                    value={kbModal.question}
+                                    onChange={(e) => setKbModal({ ...kbModal, question: e.target.value })}
+                                    rows={3}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 transition-all"
+                                    placeholder="Введите вопрос пользователя..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Ответ (база знаний)</label>
+                                <textarea
+                                    value={kbModal.answer}
+                                    onChange={(e) => setKbModal({ ...kbModal, answer: e.target.value })}
+                                    rows={5}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 transition-all"
+                                    placeholder="Введите правильный ответ..."
+                                />
+                            </div>
+                        </div>
+                        <div className="p-6 flex gap-3 bg-gray-50/50">
+                            <button
+                                onClick={() => setKbModal(null)}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={submitKB}
+                                disabled={kbModal.saving || !kbModal.question || !kbModal.answer}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 rounded-xl transition-all shadow-sm"
+                            >
+                                {kbModal.saving ? 'Сохранение...' : 'Добавить в базу'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

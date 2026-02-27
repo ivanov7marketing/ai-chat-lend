@@ -222,7 +222,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
-        const funnelSteps = tenantConfig?.funnelSteps || FUNNEL_STEPS
+        const funnelSteps = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
+            ? tenantConfig.funnelSteps
+            : FUNNEL_STEPS
 
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({

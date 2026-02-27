@@ -61,6 +61,29 @@ export async function createInvoice(
         [tenantId, invoiceNumber, data.createdBy, data.plan, data.months, data.amount]
     )
 
+    // 7. Send Email notification
+    try {
+        const { sendEmail } = await import('./emailService')
+        await sendEmail({
+            to: tenant.email,
+            subject: `Счёт на оплату ${invoiceNumber} — AI Chat Lend`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+                    <h2 style="color: #333 text-align: center;">Новый счёт на оплату</h2>
+                    <p>Здравствуйте, <b>${tenant.company_name}</b>.</p>
+                    <p>Сформирован новый счёт на оплату тарифа <b>${data.plan.toUpperCase()}</b> на <b>${data.months} мес.</b></p>
+                    <p>Сумма к оплате: <b>${data.amount.toLocaleString('ru')} ₽</b></p>
+                    <p>Вы можете скачать PDF-версию счёта в личном кабинете или по ссылке в биллинге.</p>
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="https://ai-chat-lend.ru/admin/billing" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Перейти к оплате</a>
+                    </div>
+                </div>
+            `
+        })
+    } catch (e) {
+        console.error(`[InvoiceService] Email error for ${tenant.slug}:`, e)
+    }
+
     return res.rows[0]
 }
 
