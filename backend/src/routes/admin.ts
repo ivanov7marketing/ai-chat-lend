@@ -299,4 +299,38 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const billing = await getBilling(tenantId)
         return reply.send(billing)
     })
+
+    // ---------- Knowledge Base (RAG) ----------
+    fastify.get('/api/t/:slug/admin/bot/knowledge', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        // Dynamically import to avoid circular dependencies or massive imports at the top
+        const { getKnowledgeDocuments } = await import('../services/ragService')
+        const docs = await getKnowledgeDocuments(tenantId)
+        return reply.send(docs)
+    })
+
+    fastify.post('/api/t/:slug/admin/bot/knowledge/upload', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { text, fileName } = req.body as { text: string; fileName: string }
+        if (!text || !fileName) return reply.status(400).send({ error: 'text and fileName are required' })
+
+        const { addDocument } = await import('../services/ragService')
+        const docId = await addDocument(tenantId, text, fileName)
+        return reply.send({ success: true, docId })
+    })
+
+    fastify.delete('/api/t/:slug/admin/bot/knowledge/:docId', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { docId } = req.params as { docId: string; slug: string }
+
+        const { deleteDocument } = await import('../services/ragService')
+        await deleteDocument(tenantId, docId)
+        return reply.send({ success: true })
+    })
 }

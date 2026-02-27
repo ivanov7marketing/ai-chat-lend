@@ -49,7 +49,7 @@ export default function BotKnowledge() {
         try {
             await uploadDocument(file);
             const newDoc: KnowledgeDocument = {
-                id: Date.now(),
+                id: crypto.randomUUID(),
                 filename: file.name,
                 uploadedAt: new Date().toISOString(),
                 sizeBytes: file.size,
@@ -62,7 +62,7 @@ export default function BotKnowledge() {
         }
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         await deleteDocument(id);
         setDocs((prev) => prev.filter((d) => d.id !== id));
     };
@@ -111,8 +111,8 @@ export default function BotKnowledge() {
                         key={t.key}
                         onClick={() => setSubTab(t.key)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${subTab === t.key
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                     >
                         {t.label}

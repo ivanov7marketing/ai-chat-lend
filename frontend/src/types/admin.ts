@@ -121,7 +121,7 @@ export interface BotBehavior {
 // ============ Knowledge Base ============
 
 export interface KnowledgeDocument {
-    id: number;
+    id: string;
     filename: string;
     uploadedAt: string;
     sizeBytes: number;

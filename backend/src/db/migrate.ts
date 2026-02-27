@@ -269,6 +269,19 @@ export async function runMigrations() {
         ALTER TABLE sessions ADD COLUMN manual_rating VARCHAR(30);
       END IF;
     END $$;
+
+    -- ============================================================
+    -- 13. База знаний тенанта (RAG)
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS tenant_knowledge_documents (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      file_name VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tenant_knowledge ON tenant_knowledge_documents(tenant_id, created_at DESC);
   `)
   console.log('Migrations complete')
 }

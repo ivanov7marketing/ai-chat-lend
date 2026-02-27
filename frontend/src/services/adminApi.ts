@@ -184,14 +184,6 @@ export async function updateBotBehavior(data: BotBehavior): Promise<void> {
 }
 
 // ============ Knowledge Base ============
-// NOTE: Knowledge Base has no backend endpoints yet (MVP).
-// These functions return mock data until RAG module is implemented.
-
-const MOCK_DOCUMENTS: KnowledgeDocument[] = [
-    { id: 1, filename: 'Прайс-лист 2026.pdf', uploadedAt: '2026-02-10T12:00:00Z', sizeBytes: 2400000, status: 'ready' },
-    { id: 2, filename: 'Гарантийные условия.docx', uploadedAt: '2026-02-15T09:30:00Z', sizeBytes: 450000, status: 'ready' },
-    { id: 3, filename: 'СНиП ремонт.txt', uploadedAt: '2026-02-20T14:00:00Z', sizeBytes: 120000, status: 'indexing' },
-];
 
 const MOCK_ARTICLES: KnowledgeArticle[] = [
     {
@@ -217,21 +209,42 @@ const MOCK_GAPS: KnowledgeGap[] = [
 ];
 
 export async function getKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
-    // TODO: GET /api/t/:slug/admin/bot/knowledge — pending RAG module
-    return [...MOCK_DOCUMENTS];
+    const rawDocs = await apiFetch<any[]>(`${getAdminBase()}/bot/knowledge`);
+    return rawDocs.map(d => ({
+        id: d.id,
+        filename: d.file_name,
+        uploadedAt: d.created_at,
+        sizeBytes: d.content ? d.content.length : 0, // Fallback, the endpoint doesn't return size currently
+        status: 'ready'
+    }));
 }
 
 export async function uploadDocument(
-    _file: File
+    file: File
 ): Promise<{ success: boolean }> {
-    // TODO: POST /api/t/:slug/admin/bot/knowledge/upload — pending RAG module
-    console.log('[mock] Uploading document');
-    return { success: true };
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = e.target?.result as string;
+                await apiFetch<{ success: boolean }>(`${getAdminBase()}/bot/knowledge/upload`, {
+                    method: 'POST',
+                    body: JSON.stringify({ text, fileName: file.name })
+                });
+                resolve({ success: true });
+            } catch (err) {
+                reject(err);
+            }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsText(file);
+    });
 }
 
-export async function deleteDocument(_id: number): Promise<void> {
-    // TODO: DELETE /api/t/:slug/admin/bot/knowledge/:id — pending RAG module
-    console.log('[mock] Deleting document', _id);
+export async function deleteDocument(id: number | string): Promise<void> {
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/bot/knowledge/${id}`, {
+        method: 'DELETE'
+    });
 }
 
 export async function getKnowledgeArticles(): Promise<KnowledgeArticle[]> {

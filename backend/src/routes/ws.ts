@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { WebSocket } from 'ws'
 import { createSession, saveMessage } from '../services/sessionService'
 import { pool } from '../db/client'
+import { handleFreeChat } from '../services/chatService'
 
 export async function wsRoutes(fastify: FastifyInstance) {
     // ============================================================

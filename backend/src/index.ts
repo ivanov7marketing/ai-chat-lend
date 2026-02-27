@@ -32,9 +32,12 @@ server.get('/health', async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.send({ status: 'ok' })
 })
 
+import { initQdrant } from './services/qdrantClient'
+
 const start = async () => {
     try {
         await runMigrations()
+        await initQdrant()
         await server.listen({ port: 3001, host: '0.0.0.0' })
     } catch (err) {
         server.log.error(err)
