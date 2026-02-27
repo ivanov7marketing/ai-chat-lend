@@ -1,7 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { pool } from '../db/client'
-import { sendTelegramNotification, formatLeadMessage } from '../services/telegramService'
-import { updateSessionStatus } from '../services/sessionService'
+import { sendTelegramNotification, formatLeadMessage, sendTelegramDocument } from '../services/telegramService'
+import { updateSessionStatus, incrementTenantUsage } from '../services/sessionService'
+import { generateEstimateHtml } from '../services/pdfTemplateService'
+import { generatePdfFromHtml } from '../services/pdfGenerator'
+import { createEstimate } from '../services/estimateService'
 
 interface LeadBody {
     sessionId: string
@@ -70,6 +73,11 @@ export async function leadsRoutes(fastify: FastifyInstance) {
         // Обновить статус сессии
         await updateSessionStatus(sessionId, 'converted')
 
+        // Инкремент leads_count
+        if (tenantId) {
+            await incrementTenantUsage(tenantId, 'leads_count')
+        }
+
         // Отправить уведомление в Telegram (per-tenant)
         const message = formatLeadMessage({
             contact: phone,
@@ -84,6 +92,39 @@ export async function leadsRoutes(fastify: FastifyInstance) {
             sessionId,
         })
         await sendTelegramNotification(message, tenantId || undefined)
+
+        // Асинхронно генерируем PDF (основной ответ уже отдан, но можно и дождаться)
+        try {
+            const html = await generateEstimateHtml(
+                tenantId,
+                apartmentParams as any,
+                selectedSegment,
+                estimateMin,
+                estimateMax
+            )
+
+            const pdfBuffer = await generatePdfFromHtml(html)
+
+            const pdfUrl = `/api/estimates/pdf/${sessionId}.pdf` // Mock URL for now unless S3 is connected
+
+            await createEstimate(
+                sessionId && sessionId !== 'anonymous' ? sessionId : null,
+                tenantId,
+                apartmentParams,
+                { min: estimateMin, max: estimateMax, segment: selectedSegment },
+                pdfUrl
+            )
+
+            const filename = `Смета_AI_Max_${String(apartmentParams.area).replace('.', '_')}m2.pdf`
+            await sendTelegramDocument(
+                pdfBuffer,
+                filename,
+                '📄 <b>Сгенерированная смета</b>',
+                tenantId || undefined
+            )
+        } catch (pdfErr) {
+            console.error('Failed to generate or send PDF:', pdfErr)
+        }
 
         return reply.send({ success: true })
     })

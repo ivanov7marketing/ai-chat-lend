@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { Message, ChatState, FunnelAnswers } from '../types/chat'
 import { FUNNEL_STEPS, WELCOME_MESSAGE } from '../config/funnel'
 import { submitLead as submitLeadApi } from '../services/api'
+import { reachGoal } from '../services/metrika'
 import type { TenantSegment } from '../types/auth'
 
 export interface TenantChatConfig {
@@ -9,6 +10,11 @@ export interface TenantChatConfig {
     welcomeMessage: string
     quickButtons: string[]
     segments: TenantSegment[]
+    integrations?: {
+        yandexMetrika?: {
+            counterId: string
+        }
+    }
 }
 
 interface ChatStore {
@@ -139,6 +145,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 timestamp: Date.now(),
             }
             set((s) => ({ isTyping: false, isBotMessageReady: true, messages: [...s.messages, msg] }))
+
+            const { socket } = get()
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'message',
+                    role: 'bot',
+                    content: text,
+                    id: msg.id
+                }))
+            }
         }, 400)
     },
 
@@ -156,6 +172,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         })
         get().connectWebSocket()
         get()._addBotMessage(welcomeMsg)
+
+        reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'chat_opened')
+
         if (initialQuestion) {
             setTimeout(() => get().sendUserMessage(initialQuestion), 1200)
         }
@@ -164,6 +183,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     closeChat: () => {
         const { socket } = get()
         if (socket) {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'session_close' }))
+            }
             socket.close()
         }
         set({ isOpen: false, socket: null })
@@ -192,6 +214,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (chatState === 'WELCOME') {
             if (text.startsWith('🧮')) {
                 set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
+                reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'estimate_started')
                 setTimeout(() => {
                     _addBotMessage(FUNNEL_STEPS[0].question)
                 }, 800)
@@ -297,6 +320,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         `Какой вариант больше подходит? Отправлю детальную смету 👇`
 
                     set({ chatState: 'SEGMENT_CHOICE' })
+                    reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'estimate_completed')
 
                     const minRates = segmentNames.map(seg => rates[seg]?.[0] ?? 0).filter(r => r > 0)
                     const maxRates = segmentNames.map(seg => rates[seg]?.[1]).filter((r): r is number => r !== null)
@@ -324,6 +348,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             const updatedAnswers = { ...funnelAnswers, phone: text }
             set({ funnelAnswers: updatedAnswers })
             await get().submitLead('phone', text)
+            reachGoal(tenantConfig?.integrations?.yandexMetrika?.counterId, 'lead_created')
             set({ chatState: 'FREE_CHAT' })
             setTimeout(() => _addBotMessage(
                 'Спасибо! Менеджер свяжется с вами в течение нескольких минут и пришлёт детальную смету.\n\nЕсли есть вопросы по ремонту — с удовольствием отвечу 😊'

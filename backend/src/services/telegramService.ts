@@ -51,6 +51,58 @@ export async function sendTelegramNotification(text: string, tenantId?: string) 
     }
 }
 
+export async function sendTelegramDocument(
+    pdfBuffer: Buffer,
+    filename: string,
+    caption: string,
+    tenantId?: string
+) {
+    let botToken = GLOBAL_TELEGRAM_BOT_TOKEN
+    let chatId = GLOBAL_TELEGRAM_CHAT_ID
+
+    if (tenantId) {
+        try {
+            const res = await pool.query(
+                `SELECT telegram_bot_token, telegram_chat_id
+                 FROM tenant_integrations WHERE tenant_id = $1`,
+                [tenantId]
+            )
+            if (res.rows.length > 0) {
+                const row = res.rows[0]
+                if (row.telegram_bot_token && row.telegram_chat_id) {
+                    botToken = row.telegram_bot_token
+                    chatId = row.telegram_chat_id
+                }
+            }
+        } catch (err) {
+            console.warn('Failed to load tenant Telegram config, using global:', err)
+        }
+    }
+
+    if (!botToken || !chatId) {
+        console.warn('Telegram not configured, skipping notification')
+        return
+    }
+
+    const url = `https://api.telegram.org/bot${botToken}/sendDocument`
+    const formData = new FormData()
+    formData.append('chat_id', chatId)
+    formData.append('caption', caption)
+    formData.append('parse_mode', 'HTML')
+
+    const blob = new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' })
+    formData.append('document', blob, filename)
+
+    try {
+        await fetch(url, {
+            method: 'POST',
+            body: formData as any,
+        })
+    } catch (err) {
+        console.error('Telegram document error:', err)
+    }
+}
+
 export function formatLeadMessage(data: {
     contact: string
     contactType: string

@@ -84,6 +84,11 @@ export interface TenantConfig {
     behavior: {
         estimateDisclaimer: string
     }
+    integrations?: {
+        yandexMetrika?: {
+            counterId: string
+        }
+    }
 }
 
 // ============ SuperAdmin Types ============

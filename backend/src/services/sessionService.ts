@@ -1,11 +1,34 @@
 import { pool } from '../db/client'
 
+export async function incrementTenantUsage(
+    tenantId: string,
+    metric: 'sessions_count' | 'messages_count' | 'leads_count'
+) {
+    if (!tenantId) return
+
+    // Month truncated to start of month
+    await pool.query(
+        `INSERT INTO tenant_usage (tenant_id, month, ${metric})
+         VALUES ($1, date_trunc('month', NOW()), 1)
+         ON CONFLICT (tenant_id, month)
+         DO UPDATE SET ${metric} = tenant_usage.${metric} + 1`,
+        [tenantId]
+    )
+}
+
 export async function createSession(utmSource?: string, device?: string, tenantId?: string) {
     const res = await pool.query(
         `INSERT INTO sessions (utm_source, device, tenant_id) VALUES ($1, $2, $3) RETURNING id`,
         [utmSource || null, device || null, tenantId || null]
     )
-    return res.rows[0].id as string
+    const sessionId = res.rows[0].id as string
+
+    // Increment sessions_count
+    if (tenantId) {
+        await incrementTenantUsage(tenantId, 'sessions_count')
+    }
+
+    return sessionId
 }
 
 export async function saveMessage(
@@ -17,6 +40,15 @@ export async function saveMessage(
         `INSERT INTO messages (session_id, role, content) VALUES ($1, $2, $3)`,
         [sessionId, role, content]
     )
+
+    // Increment messages_count
+    const sessionRes = await pool.query(
+        `SELECT tenant_id FROM sessions WHERE id = $1`,
+        [sessionId]
+    )
+    if (sessionRes.rows.length > 0 && sessionRes.rows[0].tenant_id) {
+        await incrementTenantUsage(sessionRes.rows[0].tenant_id, 'messages_count')
+    }
 }
 
 export async function updateSessionStatus(sessionId: string, status: string) {

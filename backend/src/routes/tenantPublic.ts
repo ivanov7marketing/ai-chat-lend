@@ -16,7 +16,7 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
         const tenantId = getTenantId(req)
 
         // Получить все данные тенанта одним запросом
-        const [tenantRes, botRes, brandingRes, segmentsRes, behaviorRes] = await Promise.all([
+        const [tenantRes, botRes, brandingRes, segmentsRes, behaviorRes, integrationsRes] = await Promise.all([
             pool.query(
                 `SELECT slug, company_name, city, logo_url FROM tenants WHERE id = $1`,
                 [tenantId]
@@ -42,6 +42,11 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
                  FROM tenant_bot_behavior WHERE tenant_id = $1`,
                 [tenantId]
             ),
+            pool.query(
+                `SELECT yandex_metrika_counter_id
+                 FROM tenant_integrations WHERE tenant_id = $1`,
+                [tenantId]
+            ),
         ])
 
         const tenant = tenantRes.rows[0] || {}
@@ -49,6 +54,7 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
         const branding = brandingRes.rows[0] || {}
         const segments = segmentsRes.rows || []
         const behavior = behaviorRes.rows[0] || {}
+        const integrations = integrationsRes.rows[0] || {}
 
         return reply.send({
             slug: tenant.slug,
@@ -83,6 +89,11 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
             behavior: {
                 estimateDisclaimer: behavior.estimate_disclaimer || '',
             },
+            integrations: {
+                ...(integrations.yandex_metrika_counter_id && {
+                    yandexMetrika: { counterId: integrations.yandex_metrika_counter_id }
+                })
+            }
         })
     })
 }

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useChatStore } from '../../store/chatStore'
 import { TenantProvider, useTenant } from '../../contexts/TenantContext'
+import { initMetrika } from '../../services/metrika'
 import HeroBlock from '../../components/HeroBlock'
 import QuestionCard from '../../components/QuestionCard'
 import ChatWindow from '../../components/chat/ChatWindow'
@@ -34,7 +35,12 @@ function TenantLandingContent() {
                     (b) => `${b.emoji} ${b.text}`
                 ),
                 segments: tenant.segments,
+                integrations: tenant.integrations,
             })
+
+            if (tenant.integrations?.yandexMetrika?.counterId) {
+                initMetrika(tenant.integrations.yandexMetrika.counterId)
+            }
         }
     }, [slug, tenant, setTenantSlug, setTenantConfig])
 

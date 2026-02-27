@@ -24,14 +24,20 @@ export async function wsRoutes(fastify: FastifyInstance) {
                 if (data.type === 'message' && sessionId) {
                     await saveMessage(sessionId, data.role, data.content)
                     socket.send(JSON.stringify({ type: 'ack', messageId: data.id }))
+                } else if (data.type === 'session_close' && sessionId) {
+                    await pool.query(`UPDATE sessions SET status = 'closed' WHERE id = $1`, [sessionId])
                 }
             } catch (e) {
                 console.error('WS message error:', e)
             }
         })
 
-        socket.on('close', () => {
+        socket.on('close', async () => {
             console.log(`Session closed: ${sessionId}`)
+            if (sessionId) {
+                // Fallback to close session if it is still active
+                await pool.query(`UPDATE sessions SET status = 'closed' WHERE id = $1 AND status = 'active'`, [sessionId])
+            }
         })
     })
 
@@ -74,14 +80,20 @@ export async function wsRoutes(fastify: FastifyInstance) {
                 if (data.type === 'message' && sessionId) {
                     await saveMessage(sessionId, data.role, data.content)
                     socket.send(JSON.stringify({ type: 'ack', messageId: data.id }))
+                } else if (data.type === 'session_close' && sessionId) {
+                    await pool.query(`UPDATE sessions SET status = 'closed' WHERE id = $1`, [sessionId])
                 }
             } catch (e) {
                 console.error('WS message error:', e)
             }
         })
 
-        socket.on('close', () => {
+        socket.on('close', async () => {
             console.log(`[${slug}] Session closed: ${sessionId}`)
+            if (sessionId) {
+                // Fallback to close session if it is still active
+                await pool.query(`UPDATE sessions SET status = 'closed' WHERE id = $1 AND status = 'active'`, [sessionId])
+            }
         })
     })
 }
