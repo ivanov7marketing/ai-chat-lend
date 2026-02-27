@@ -32,7 +32,13 @@ export async function superAdminRoutes(fastify: FastifyInstance) {
         const t = tenants.rows[0]
         const s = sessions.rows[0]
         const l = leads.rows[0]
-        const u = usage.rows[0]
+
+        // MRR calculation (paid invoices this month)
+        const mrrRes = await pool.query(
+            `SELECT COALESCE(SUM(amount), 0)::numeric AS mrr
+             FROM invoices
+             WHERE status = 'paid' AND created_at >= date_trunc('month', NOW())`
+        )
 
         // Распределение по тарифам
         const planDist = await pool.query(
@@ -40,10 +46,12 @@ export async function superAdminRoutes(fastify: FastifyInstance) {
         )
 
         return reply.send({
-            tenants: { total: t.total, active: t.active, new30d: t.new_30d },
-            sessions: { total: s.total },
-            leads: { total: l.total },
-            usage: { totalTokens: Number(u.total_tokens), totalSessions: u.total_sessions },
+            totalTenants: t.total,
+            activeTenants: t.active,
+            newTenants: t.new_30d,
+            totalSessions: s.total,
+            totalLeads: l.total,
+            mrr: Number(mrrRes.rows[0].mrr),
             planDistribution: planDist.rows,
         })
     })

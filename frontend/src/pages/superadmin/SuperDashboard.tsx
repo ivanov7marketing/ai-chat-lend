@@ -49,7 +49,7 @@ export default function SuperDashboard() {
                             <div className="animate-pulse bg-gray-200 rounded-xl h-8 w-20" />
                         ) : (
                             <p className="text-2xl font-bold text-gray-900">
-                                {metrics ? metrics[key].toLocaleString('ru-RU') : '—'}
+                                {metrics && metrics[key] !== undefined ? metrics[key].toLocaleString('ru-RU') : '0'}
                             </p>
                         )}
                     </div>
@@ -65,7 +65,7 @@ export default function SuperDashboard() {
                     <div className="animate-pulse bg-gray-200 rounded-xl h-8 w-32" />
                 ) : (
                     <p className="text-3xl font-bold text-gray-900">
-                        {metrics ? metrics.mrr.toLocaleString('ru-RU') : 0}{' '}
+                        {metrics?.mrr !== undefined ? metrics.mrr.toLocaleString('ru-RU') : '0'}{' '}
                         <span className="text-lg font-normal text-gray-400">₽</span>
                     </p>
                 )}

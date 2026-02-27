@@ -35,8 +35,8 @@ export default function InvoicesList() {
     };
 
     const filteredInvoices = invoices.filter(inv => {
-        const matchesSearch = inv.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (inv.company_name && inv.company_name.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearch = (inv.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (inv.company_name?.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesStatus = statusFilter === 'all' || inv.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -103,7 +103,7 @@ export default function InvoicesList() {
                                     <span className="capitalize">{inv.plan}</span> ({inv.months} мес.)
                                 </td>
                                 <td className="px-6 py-4 font-medium text-gray-900">
-                                    {Number(inv.amount).toLocaleString()} ₽
+                                    {Number(inv.amount || 0).toLocaleString()} ₽
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${inv.status === 'paid' ? 'bg-green-100 text-green-700' :
