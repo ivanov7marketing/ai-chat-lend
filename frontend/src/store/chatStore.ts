@@ -30,6 +30,7 @@ interface ChatStore {
     isTyping: boolean
     isBotMessageReady: boolean
     isHumanManaged: boolean
+    managerIsTyping: boolean
     availableSegments: string[]
     sessionId: string | null
     estimateMin: number
@@ -77,6 +78,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     isTyping: false,
     isBotMessageReady: false,
     isHumanManaged: false,
+    managerIsTyping: false,
     availableSegments: [],
     sessionId: null,
     estimateMin: 0,
@@ -137,6 +139,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         timestamp: Date.now(),
                     }
                     set((s) => ({ messages: [...s.messages, msg], isTyping: false }))
+                } else if (data.type === 'typing') {
+                    set({ managerIsTyping: data.active })
                 }
             } catch (e) {
                 console.error('WebSocket receive error:', e)

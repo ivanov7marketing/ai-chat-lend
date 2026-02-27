@@ -43,8 +43,6 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     return res.json();
 }
 
-// ============ Dashboard ============
-
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     try {
         return await apiFetch<DashboardMetrics>(`${getAdminBase()}/dashboard/metrics`);
@@ -59,6 +57,14 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
             avgDialogDuration: '—',
         };
     }
+}
+
+export async function getFunnelData(): Promise<{ name: string, value: number }[]> {
+    return apiFetch<{ name: string, value: number }[]>(`${getAdminBase()}/dashboard/funnel`);
+}
+
+export async function getSegmentsData(): Promise<{ name: string, value: number }[]> {
+    return apiFetch<{ name: string, value: number }[]>(`${getAdminBase()}/dashboard/segments`);
 }
 
 // ============ Dialogs ============

@@ -8,7 +8,9 @@ import {
     getDashboardMetrics, updateDialogRating, addWorkType,
     getBranding, updateBranding,
     getTeamMembers, addTeamMember, updateTeamMember, removeTeamMember,
-    getBilling, updateDomain, verifyTenantDomain
+    getBilling, updateDomain, verifyTenantDomain,
+    getFunnelDropOff, getSegmentPopularity,
+    getCannedResponses, addCannedResponse, deleteCannedResponse
 } from '../services/tenantAdminService'
 import { tenantResolver, getTenantId } from '../middleware/tenantResolver'
 import { authGuard } from '../middleware/authGuard'
@@ -68,6 +70,22 @@ export async function adminRoutes(fastify: FastifyInstance) {
         return reply.send(metrics)
     })
 
+    fastify.get('/api/t/:slug/admin/dashboard/funnel', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const data = await getFunnelDropOff(tenantId)
+        return reply.send(data)
+    })
+
+    fastify.get('/api/t/:slug/admin/dashboard/segments', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const data = await getSegmentPopularity(tenantId)
+        return reply.send(data)
+    })
+
     // ---------- Dialogs ----------
     fastify.get('/api/t/:slug/admin/dialogs', {
         preHandler: [tenantResolver, tenantGuard],
@@ -78,6 +96,42 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const offset = Number(query.offset) || 0
         const result = await getDialogsList(limit, offset, tenantId)
         return reply.send(result)
+    })
+
+    fastify.get('/api/t/:slug/admin/leads/export', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { getLeadsExport } = await import('../services/adminService')
+        const leads = await getLeadsExport(tenantId)
+
+        const headers = ['Дата', 'Тип контакта', 'Контакт', 'Мин. цена', 'Макс. цена', 'Сегмент', 'Площадь', 'Тип ремонта', 'UTM Source', 'UTM Medium', 'UTM Campaign']
+        const csvRows = [headers.join(';')]
+
+        for (const l of leads) {
+            const row = [
+                new Date(l.created_at).toLocaleString('ru-RU'),
+                l.contact_type,
+                l.contact_value,
+                l.estimate_min,
+                l.estimate_max,
+                l.selected_segment,
+                l.area,
+                l.repair_type,
+                l.utm_source || '',
+                l.utm_medium || '',
+                l.utm_campaign || ''
+            ]
+            csvRows.push(row.map(v => JSON.stringify(v)).join(';'))
+        }
+
+        const csv = csvRows.join('\n')
+        const filename = `leads_${new Date().toISOString().split('T')[0]}.csv`
+
+        return reply
+            .header('Content-Type', 'text/csv; charset=utf-8')
+            .header('Content-Disposition', `attachment; filename="${filename}"`)
+            .send('\uFEFF' + csv) // UTF-8 BOM
     })
 
     fastify.get('/api/t/:slug/admin/dialogs/:id', {
@@ -195,6 +249,33 @@ export async function adminRoutes(fastify: FastifyInstance) {
             estimateDisclaimer?: string; pdfTtlNotice?: string
         }
         await updateBotBehavior(tenantId, body)
+        return reply.send({ success: true })
+    })
+
+    // ---------- Canned Responses ----------
+    fastify.get('/api/t/:slug/admin/bot/canned-responses', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const items = await getCannedResponses(tenantId)
+        return reply.send(items)
+    })
+
+    fastify.post('/api/t/:slug/admin/bot/canned-responses', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { title, content } = req.body as { title: string; content: string }
+        const item = await addCannedResponse(tenantId, title, content)
+        return reply.status(201).send(item)
+    })
+
+    fastify.delete('/api/t/:slug/admin/bot/canned-responses/:id', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { id } = req.params as { id: string; slug: string }
+        await deleteCannedResponse(tenantId, id)
         return reply.send({ success: true })
     })
 
@@ -390,5 +471,16 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const tenantId = getTenantId(req)
         const result = await verifyTenantDomain(tenantId)
         return reply.send(result)
+    })
+
+    // ---------- Audit Log ----------
+    fastify.get('/api/t/:slug/admin/audit', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        // Note: Actual audit logging would need a separate service. 
+        // For now, return empty as audit log table is system-wide.
+        // TODO: Implement platform_audit_log filtering by tenant_id if applicable.
+        return reply.send([])
     })
 }

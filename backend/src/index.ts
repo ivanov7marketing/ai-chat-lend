@@ -14,6 +14,7 @@ import { estimatesRoutes } from './routes/estimates'
 import { uploadsRoutes } from './routes/uploads'
 
 import { initPlanExpiryJob } from './services/planExpiryJob'
+import { initCleanupTask } from './services/cleanupService'
 
 dotenv.config()
 
@@ -52,6 +53,7 @@ const start = async () => {
         await runMigrations()
         await initQdrant()
         initPlanExpiryJob()
+        initCleanupTask()
         await server.listen({ port: 3001, host: '0.0.0.0' })
     } catch (err) {
         server.log.error(err)

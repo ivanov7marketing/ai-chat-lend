@@ -196,6 +196,36 @@ export async function updateBotBehavior(
 }
 
 // ============================================================
+// Canned Responses (tenant_canned_responses)
+// ============================================================
+
+export async function getCannedResponses(tenantId: string) {
+    const res = await pool.query(
+        `SELECT id, title, content FROM tenant_canned_responses WHERE tenant_id = $1 ORDER BY created_at DESC`,
+        [tenantId]
+    )
+    return res.rows
+}
+
+export async function addCannedResponse(tenantId: string, title: string, content: string) {
+    const res = await pool.query(
+        `INSERT INTO tenant_canned_responses (tenant_id, title, content)
+         VALUES ($1, $2, $3)
+         RETURNING id, title, content`,
+        [tenantId, title, content]
+    )
+    return res.rows[0]
+}
+
+export async function deleteCannedResponse(tenantId: string, id: string) {
+    const res = await pool.query(
+        `DELETE FROM tenant_canned_responses WHERE id = $1 AND tenant_id = $2 RETURNING id`,
+        [id, tenantId]
+    )
+    return res.rows.length > 0
+}
+
+// ============================================================
 // Integrations (tenant_integrations)
 // ============================================================
 
@@ -463,6 +493,36 @@ export async function getDashboardMetrics(tenantId: string) {
             ? `~${avgMessages} сообщений`
             : '—',
     }
+}
+
+export async function getFunnelDropOff(tenantId: string) {
+    // This is a simplified version counting users who reached specific stages
+    const steps = [
+        { label: 'Всего сессий', query: 'SELECT COUNT(*)::int FROM sessions WHERE tenant_id = $1' },
+        { label: 'Начали расчет', query: `SELECT COUNT(DISTINCT session_id)::int FROM messages m JOIN sessions s ON s.id = m.session_id WHERE s.tenant_id = $1 AND m.role = 'user' AND m.content ~ '^[0-9]+' AND s.id IN (SELECT session_id FROM messages WHERE content LIKE '%площадь%')` },
+        { label: 'Заполнили параметры', query: `SELECT COUNT(DISTINCT session_id)::int FROM messages m JOIN sessions s ON s.id = m.session_id WHERE s.tenant_id = $1 AND m.role = 'bot' AND m.content LIKE '%будет стоить ориентировочно%'` },
+        { label: 'Выбрали сегмент', query: `SELECT COUNT(DISTINCT session_id)::int FROM messages m JOIN sessions s ON s.id = m.session_id WHERE s.tenant_id = $1 AND m.role = 'user' AND s.id IN (SELECT session_id FROM messages WHERE content LIKE '%Какой вариант больше подходит?%')` },
+        { label: 'Оставили контакт', query: `SELECT COUNT(*)::int FROM leads WHERE tenant_id = $1` },
+    ]
+
+    const result = []
+    for (const step of steps) {
+        const res = await pool.query(step.query, [tenantId])
+        result.push({ name: step.label, value: res.rows[0].count || 0 })
+    }
+    return result
+}
+
+export async function getSegmentPopularity(tenantId: string) {
+    const res = await pool.query(
+        `SELECT apartment_params->>'selectedSegment' as segment, COUNT(*)::int as count 
+         FROM leads 
+         WHERE tenant_id = $1 AND apartment_params->>'selectedSegment' IS NOT NULL
+         GROUP BY 1 
+         ORDER BY 2 DESC`,
+        [tenantId]
+    )
+    return res.rows.map(r => ({ name: r.segment, value: r.count }))
 }
 
 // ============================================================

@@ -210,7 +210,16 @@ export default function DialogDetail() {
                         <input
                             type="text"
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
+                            onChange={(e) => {
+                                setInputValue(e.target.value)
+                                // Send typing indicator
+                                if (socket && socket.readyState === WebSocket.OPEN) {
+                                    socket.send(JSON.stringify({
+                                        type: 'manager_typing',
+                                        active: e.target.value.length > 0
+                                    }))
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && inputValue.trim()) {
                                     if (socket && socket.readyState === WebSocket.OPEN) {
@@ -219,6 +228,11 @@ export default function DialogDetail() {
                                             content: inputValue.trim(),
                                             id: Date.now().toString()
                                         }));
+                                        // Reset typing indicator on send
+                                        socket.send(JSON.stringify({
+                                            type: 'manager_typing',
+                                            active: false
+                                        }))
                                         setInputValue('');
                                     }
                                 }
@@ -235,6 +249,11 @@ export default function DialogDetail() {
                                         content: inputValue.trim(),
                                         id: Date.now().toString()
                                     }));
+                                    // Reset typing indicator on send
+                                    socket.send(JSON.stringify({
+                                        type: 'manager_typing',
+                                        active: false
+                                    }))
                                     setInputValue('');
                                 }
                             }}

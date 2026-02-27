@@ -320,25 +320,17 @@ export async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_tenant_knowledge ON tenant_knowledge_documents(tenant_id, created_at DESC);
 
     -- ============================================================
-    -- 14. Счета (Invoices) для B2B оплаты
+    -- 15. Шаблоны ответов (Canned Responses)
     -- ============================================================
-    CREATE TABLE IF NOT EXISTS invoices (
+    CREATE TABLE IF NOT EXISTS tenant_canned_responses (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-      invoice_number VARCHAR(50) UNIQUE NOT NULL,
-      created_by VARCHAR(20) NOT NULL,            -- 'tenant' | 'superadmin'
-      plan VARCHAR(20) NOT NULL,
-      months INT NOT NULL,                        -- 1, 3, 6, 12
-      amount NUMERIC(10,2) NOT NULL,
-      discount_percent INT DEFAULT 0,
-      status VARCHAR(20) DEFAULT 'pending',       -- pending, paid, cancelled
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      paid_at TIMESTAMPTZ,
-      paid_by UUID REFERENCES platform_admins(id) -- кто отметил оплату
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      title VARCHAR(100) NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    CREATE INDEX IF NOT EXISTS idx_invoices_tenant ON invoices(tenant_id);
-    CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+    CREATE INDEX IF NOT EXISTS idx_tenant_canned_responses ON tenant_canned_responses(tenant_id);
   `)
   console.log('Migrations complete')
 }

@@ -12,6 +12,7 @@ import {
     CreditCard,
     ArrowLeft,
     LogOut,
+    Shield,
 } from 'lucide-react'
 
 function TenantAdminContent() {
@@ -35,6 +36,7 @@ function TenantAdminContent() {
         { to: `/${slug}/admin/branding`, icon: Palette, label: 'Брендинг' },
         { to: `/${slug}/admin/team`, icon: Users, label: 'Команда' },
         { to: `/${slug}/admin/billing`, icon: CreditCard, label: 'Биллинг' },
+        { to: `/${slug}/admin/audit`, icon: Shield, label: 'Журнал аудита' },
     ]
 
     return (

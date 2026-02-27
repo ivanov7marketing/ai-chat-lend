@@ -146,17 +146,12 @@ export async function wsRoutes(fastify: FastifyInstance) {
 
                         // Notify all clients in the room (including the admin who initiated it)
                         broadcastToRoom(sessionId, { type: 'takeover_active' })
-                    } else if (data.type === 'manager_message' && sessionId) {
-                        await saveMessage(sessionId, 'manager', data.content)
-                        // Broadcast the manager's message to the widget
+                    } else if (data.type === 'manager_typing' && sessionId) {
+                        // Broadcast manager typing status to the widget
                         broadcastToRoom(sessionId, {
-                            type: 'message',
-                            role: 'manager',
-                            content: data.content,
-                            id: Date.now().toString()
-                        }, socket) // Exclude sender
-                        // Also acknowledge to the sending admin
-                        socket.send(JSON.stringify({ type: 'ack', messageId: data.id || Date.now().toString() }))
+                            type: 'typing',
+                            active: data.active
+                        }, socket)
                     }
                     return
                 }

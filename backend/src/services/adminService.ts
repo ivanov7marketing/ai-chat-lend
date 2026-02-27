@@ -124,3 +124,26 @@ export async function updatePrices(
         client.release()
     }
 }
+
+export async function getLeadsExport(tenantId: string) {
+    const res = await pool.query(
+        `SELECT 
+            l.created_at,
+            l.contact_type,
+            l.contact_value,
+            l.estimate_min,
+            l.estimate_max,
+            l.selected_segment,
+            l.apartment_params->>'area' as area,
+            l.apartment_params->>'repairType' as repair_type,
+            s.utm_source,
+            s.utm_medium,
+            s.utm_campaign
+         FROM leads l
+         JOIN sessions s ON s.id = l.session_id
+         WHERE l.tenant_id = $1
+         ORDER BY l.created_at DESC`,
+        [tenantId]
+    )
+    return res.rows
+}
