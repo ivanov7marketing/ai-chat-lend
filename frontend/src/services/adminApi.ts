@@ -279,3 +279,35 @@ export async function testIntegration(
         { method: 'POST' }
     );
 }
+
+// ============ Knowledge Base ============
+
+export async function addQAPair(question: string, answer: string): Promise<void> {
+    await apiFetch(`${getAdminBase()}/bot/knowledge/qa`, {
+        method: 'POST',
+        body: JSON.stringify({ question, answer })
+    });
+}
+
+// ============ File Uploads ============
+
+export async function uploadFile(file: File): Promise<{ key: string, url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = getToken();
+    const res = await fetch(`${API_BASE}${getAdminBase()}/upload`, {
+        method: 'POST',
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => 'Upload failed');
+        throw new Error(`Upload error ${res.status}: ${text}`);
+    }
+
+    return res.json();
+}

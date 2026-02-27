@@ -84,3 +84,26 @@ export async function removeTeamMember(userId: string): Promise<void> {
 export async function getBilling(): Promise<BillingData> {
     return apiFetch<BillingData>(`${getAdminBase()}/billing`);
 }
+
+// ============ File Uploads ============
+
+export async function uploadFile(file: File): Promise<{ key: string, url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = getToken();
+    const res = await fetch(`${API_BASE}${getAdminBase()}/upload`, {
+        method: 'POST',
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData,
+    });
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => 'Upload failed');
+        throw new Error(`Upload error ${res.status}: ${text}`);
+    }
+
+    return res.json();
+}

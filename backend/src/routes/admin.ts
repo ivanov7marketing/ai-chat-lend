@@ -12,6 +12,7 @@ import {
 } from '../services/tenantAdminService'
 import { tenantResolver, getTenantId } from '../middleware/tenantResolver'
 import { authGuard } from '../middleware/authGuard'
+import * as invoiceService from '../services/invoiceService'
 
 /**
  * Admin-маршруты тенанта (защищены authGuard)
@@ -323,6 +324,18 @@ export async function adminRoutes(fastify: FastifyInstance) {
         return reply.send({ success: true, docId })
     })
 
+    fastify.post('/api/t/:slug/admin/bot/knowledge/qa', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { question, answer } = req.body as { question: string; answer: string }
+        if (!question || !answer) return reply.status(400).send({ error: 'question and answer are required' })
+
+        const { addQAPair } = await import('../services/ragService')
+        const docId = await addQAPair(tenantId, question, answer)
+        return reply.send({ success: true, docId })
+    })
+
     fastify.delete('/api/t/:slug/admin/bot/knowledge/:docId', {
         preHandler: [tenantResolver, tenantGuard],
     }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -332,5 +345,32 @@ export async function adminRoutes(fastify: FastifyInstance) {
         const { deleteDocument } = await import('../services/ragService')
         await deleteDocument(tenantId, docId)
         return reply.send({ success: true })
+    })
+
+    // ---------- Billing Invoices ----------
+    fastify.get('/api/t/:slug/admin/billing/invoices', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const invoices = await invoiceService.getTenantInvoices(tenantId)
+        return reply.send({ data: invoices })
+    })
+
+    fastify.post('/api/t/:slug/admin/billing/invoices', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const body = req.body as { plan: string; months: number; amount: number }
+
+        if (!body.plan || !body.months || !body.amount) {
+            return reply.status(400).send({ error: 'Missing required fields' })
+        }
+
+        const invoice = await invoiceService.createInvoice(tenantId, {
+            ...body,
+            createdBy: 'tenant'
+        })
+
+        return reply.send(invoice)
     })
 }

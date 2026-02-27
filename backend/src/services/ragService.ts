@@ -146,6 +146,11 @@ export async function deleteDocument(tenantId: string, docId: string) {
     })
 }
 
+export async function addQAPair(tenantId: string, question: string, answer: string) {
+    const combinedText = `Вопрос: ${question}\nОтвет: ${answer}`
+    return await addDocument(tenantId, combinedText, `QA_${Date.now()}.txt`)
+}
+
 export async function getKnowledgeDocuments(tenantId: string) {
     const res = await pool.query(
         `SELECT id, file_name, created_at FROM tenant_knowledge_documents WHERE tenant_id = $1 ORDER BY created_at DESC`,

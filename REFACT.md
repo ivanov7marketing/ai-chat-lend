@@ -268,6 +268,27 @@ CREATE TABLE platform_audit_log (
 );
 
 CREATE INDEX idx_audit_log_tenant ON platform_audit_log(tenant_id, created_at DESC);
+
+-- ============================================================
+-- Счета (invoices) для B2B оплаты
+-- ============================================================
+CREATE TABLE invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  invoice_number VARCHAR(50) UNIQUE NOT NULL, -- INV-2026-0001
+  created_by VARCHAR(20) NOT NULL,            -- 'tenant' | 'superadmin'
+  plan VARCHAR(20) NOT NULL,
+  months INT NOT NULL,                        -- 1, 3, 6, 12
+  amount NUMERIC(10,2) NOT NULL,
+  discount_percent INT DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'pending',       -- pending, paid, cancelled
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  paid_at TIMESTAMPTZ,
+  paid_by UUID REFERENCES platform_admins(id) -- кто отметил оплату
+);
+
+CREATE INDEX idx_invoices_tenant ON invoices(tenant_id);
+CREATE INDEX idx_invoices_status ON invoices(status);
 ```
 
 ### 3.2. Изменения в существующих таблицах
@@ -491,6 +512,9 @@ POST   /api/t/:slug/admin/team               — Добавить сотрудн
 PUT    /api/t/:slug/admin/team/:userId       — Изменить роль/статус
 DELETE /api/t/:slug/admin/team/:userId       — Удалить сотрудника
 GET    /api/t/:slug/admin/billing            — Текущий тариф, использование ресурсов
+POST   /api/t/:slug/admin/billing/invoices   — Сформировать счёт (PDF)
+GET    /api/t/:slug/admin/billing/invoices   — История своих счетов
+GET    /api/t/:slug/admin/billing/invoices/:id/pdf — Скачать PDF счёта
 ```
 
 #### Суперадминка (с авторизацией superadmin)
@@ -506,6 +530,11 @@ GET    /api/superadmin/analytics             — Агрегированная а
 GET    /api/superadmin/analytics/revenue     — Доход по месяцам
 GET    /api/superadmin/analytics/growth      — Рост тенантов
 GET    /api/superadmin/usage                 — Использование ресурсов по тенантам
+GET    /api/superadmin/invoices               — Все счета (фильтры)
+POST   /api/superadmin/tenants/:id/invoices   — Выставить счёт вручную
+PUT    /api/superadmin/invoices/:id/pay       — Отметить оплату (активация плана)
+PUT    /api/superadmin/invoices/:id/cancel    — Отменить счёт
+GET    /api/superadmin/invoices/:id/pdf       — Скачать PDF счёта
 GET    /api/superadmin/audit-log             — Аудит-лог
 GET    /api/superadmin/settings              — Настройки платформы
 PUT    /api/superadmin/settings              — Обновить настройки
@@ -599,6 +628,17 @@ export async function checkLimit(tenantId: string, resource: string): Promise<bo
 export async function incrementUsage(tenantId: string, resource: string, amount: number = 1): Promise<void> {
     // UPSERT в tenant_usage для текущего месяца
 }
+
+### 4.8. Контроль подписок и Cron-задачи
+
+Для B2B-модели с ручным подтверждением оплаты:
+
+1. **tenant_invoices**: Генерируются через Puppeteer с использованием шаблона `assets/invoice_template.html`.
+2. **Cron-задача (`services/planExpiryJob.ts`)**: Запускается ежедневно через `node-cron '0 3 * * *'`.
+   - Проверяет `plan_expires_at` в таблице `tenants`.
+   - За 7 и 3 дня отправляет уведомления тенанту и суперадмину через SMTP (Nodemailer).
+   - При истечении срока — `UPDATE tenants SET plan = 'free', plan_expires_at = NULL`.
+3. **Активация**: При вызове суперадмином `PUT /api/superadmin/invoices/:id/pay`, обновляется запись тенанта: `plan_expires_at = NOW() + interval 'X months'`.
 ```
 
 ---
@@ -923,6 +963,9 @@ function TenantLanding() {
   - Сотрудников: 2 / 3
 - Кнопка «Сменить тариф» → модальное окно с тарифами
 - История оплат (если подключена оплата)
+- Форма выбора плана (Pro/Enterprise) + срок (1/3/6/12 мес)
+- Кнопка «Сформировать счёт» → INV-PDF
+- История выставленных счетов со статусами (Оплачен / Ожидает / Отменён)
 
 ---
 

@@ -5,6 +5,7 @@ import {
     deleteDocument,
     getKnowledgeArticles,
     getKnowledgeGaps,
+    addQAPair
 } from '../../../services/adminApi';
 import type { KnowledgeDocument, KnowledgeArticle, KnowledgeGap } from '../../../types/admin';
 import {
@@ -261,7 +262,21 @@ export default function BotKnowledge() {
                                         {new Date(gap.createdAt).toLocaleDateString('ru-RU')}
                                     </td>
                                     <td className="px-4 py-3.5">
-                                        <button className="text-primary-600 hover:text-primary-700 font-medium text-xs transition-colors">
+                                        <button
+                                            onClick={async () => {
+                                                const answer = prompt(`Ответ на вопрос: "${gap.question}"`);
+                                                if (answer) {
+                                                    try {
+                                                        await addQAPair(gap.question, answer);
+                                                        setGaps(prev => prev.filter(g => g.id !== gap.id));
+                                                        alert('Ответ сохранен в базу знаний!');
+                                                    } catch (err) {
+                                                        alert('Ошибка сохранения');
+                                                    }
+                                                }
+                                            }}
+                                            className="text-primary-600 hover:text-primary-700 font-medium text-xs transition-colors"
+                                        >
                                             Заполнить →
                                         </button>
                                     </td>

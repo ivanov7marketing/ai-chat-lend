@@ -7,9 +7,11 @@ import type { TenantSegment } from '../types/auth'
 
 export interface TenantChatConfig {
     botName: string
+    avatarUrl: string | null
     welcomeMessage: string
-    quickButtons: string[]
+    quickButtons: any[]
     segments: TenantSegment[]
+    funnelSteps: any[] | null
     integrations?: {
         yandexMetrika?: {
             counterId: string
@@ -219,6 +221,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
+        const funnelSteps = tenantConfig?.funnelSteps || FUNNEL_STEPS
 
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
@@ -238,7 +241,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     tenantConfig?.integrations?.yandexMetrika?.events
                 )
                 setTimeout(() => {
-                    _addBotMessage(FUNNEL_STEPS[0].question)
+                    _addBotMessage(funnelSteps[0].question)
                 }, 800)
             } else {
                 setTimeout(() => {
@@ -249,14 +252,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
 
         if (chatState === 'FUNNEL') {
-            const step = FUNNEL_STEPS[currentFunnelStep]
+            const step = funnelSteps[currentFunnelStep]
             const updatedAnswers: FunnelAnswers = { ...funnelAnswers, [step.id]: text }
             set({ funnelAnswers: updatedAnswers })
 
             const getNextStepIndex = (fromIndex: number, answers: FunnelAnswers): number | null => {
                 let next = fromIndex + 1
-                while (next < FUNNEL_STEPS.length) {
-                    const nextStep = FUNNEL_STEPS[next]
+                while (next < funnelSteps.length) {
+                    const nextStep = funnelSteps[next]
                     if (nextStep.skipIf) {
                         const { stepId, value } = nextStep.skipIf
                         if (answers[stepId as keyof FunnelAnswers] === value) {
@@ -358,8 +361,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 }, 2800)
             } else {
                 set({ currentFunnelStep: nextIndex, isBotMessageReady: false })
-                setTimeout(() => _addBotMessage(FUNNEL_STEPS[nextIndex].question), 800)
+                setTimeout(() => _addBotMessage(funnelSteps[nextIndex].question), 800)
             }
+            return
         }
 
         if (chatState === 'SEGMENT_CHOICE') {
@@ -368,6 +372,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             setTimeout(() => {
                 _addBotMessage(`Отлично! Отправлю смету в ${text}.\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
             }, 600)
+            return
         }
 
         if (chatState === 'LEAD_CAPTURE') {

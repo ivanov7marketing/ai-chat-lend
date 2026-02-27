@@ -22,7 +22,7 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
                 [tenantId]
             ),
             pool.query(
-                `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons
+                `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons, funnel_steps
                  FROM tenant_bot_settings WHERE tenant_id = $1`,
                 [tenantId]
             ),
@@ -79,6 +79,7 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
                 language: bot.language || 'ru',
                 welcomeMessage: bot.welcome_message || '',
                 quickButtons: bot.quick_buttons || [],
+                funnelSteps: bot.funnel_steps || null,
             },
             segments: segments.map((s: any) => ({
                 name: s.name,

@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { pool } from '../db/client'
 import { authGuard, getAuth } from '../middleware/authGuard'
+import * as invoiceService from '../services/invoiceService'
 
 /**
  * Маршруты суперадминки (владелец платформы)
@@ -234,5 +235,27 @@ export async function superAdminRoutes(fastify: FastifyInstance) {
         )
 
         return reply.send({ data: res.rows })
+    })
+
+    // ============ Счета (Invoices) ============
+    fastify.get('/api/superadmin/invoices', {
+        preHandler: [guard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const invoices = await invoiceService.getAllInvoices()
+        return reply.send({ data: invoices })
+    })
+
+    fastify.put('/api/superadmin/invoices/:id/pay', {
+        preHandler: [guard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const { id } = req.params as { id: string }
+        const auth = getAuth(req)
+
+        try {
+            await invoiceService.markInvoicePaid(id, auth.userId)
+            return reply.send({ success: true })
+        } catch (error: any) {
+            return reply.status(400).send({ error: error.message })
+        }
     })
 }

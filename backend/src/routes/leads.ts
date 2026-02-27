@@ -6,6 +6,7 @@ import { generateEstimateHtml } from '../services/pdfTemplateService'
 import { generatePdfFromHtml } from '../services/pdfGenerator'
 import { createEstimate } from '../services/estimateService'
 import { sendLeadToAmoCRM } from '../services/amocrmService'
+import { uploadFile } from '../services/s3Service'
 
 interface ApartmentParams {
     area: string
@@ -120,14 +121,15 @@ export async function leadsRoutes(fastify: FastifyInstance) {
 
             const pdfBuffer = await generatePdfFromHtml(html)
 
-            const pdfUrl = `/api/estimates/pdf/${sessionId}.pdf` // Mock URL for now unless S3 is connected
+            const pdfKey = `estimates/pdfs/${tenantId || 'global'}/${sessionId}_${Date.now()}.pdf`
+            const uploadResult = await uploadFile(pdfBuffer, pdfKey, 'application/pdf')
 
             await createEstimate(
                 sessionId && sessionId !== 'anonymous' ? sessionId : null,
                 tenantId,
                 apartmentParams,
                 { min: estimateMin, max: estimateMax, segment: selectedSegment },
-                pdfUrl
+                uploadResult.key
             )
 
             const filename = `Смета_AI_Max_${String(apartmentParams.area).replace('.', '_')}m2.pdf`

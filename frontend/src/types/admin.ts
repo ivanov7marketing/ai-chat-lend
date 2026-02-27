@@ -89,10 +89,12 @@ export interface NewWorkType {
 
 export interface BotPersonality {
     name: string;
+    avatarUrl: string | null;
     tone: 'professional' | 'friendly' | 'neutral';
     language: 'ru' | 'en';
     welcomeMessage: string;
     quickButtons: QuickButton[];
+    funnelSteps?: any[] | null;
 }
 
 export interface QuickButton {

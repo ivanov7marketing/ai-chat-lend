@@ -10,7 +10,7 @@ const BCRYPT_ROUNDS = 12
 
 export async function getBotPersonality(tenantId: string) {
     const res = await pool.query(
-        `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons, system_prompt_override
+        `SELECT bot_name, bot_avatar_url, tone, language, welcome_message, quick_buttons, system_prompt_override, funnel_steps
          FROM tenant_bot_settings WHERE tenant_id = $1`,
         [tenantId]
     )
@@ -24,6 +24,7 @@ export async function getBotPersonality(tenantId: string) {
         language: row.language,
         welcomeMessage: row.welcome_message,
         quickButtons: row.quick_buttons || [],
+        funnelSteps: row.funnel_steps || null,
     }
 }
 
@@ -35,6 +36,7 @@ export async function updateBotPersonality(
         language?: string
         welcomeMessage?: string
         quickButtons?: any[]
+        funnelSteps?: any[]
     }
 ) {
     await pool.query(
@@ -44,6 +46,7 @@ export async function updateBotPersonality(
              language = COALESCE($4, language),
              welcome_message = COALESCE($5, welcome_message),
              quick_buttons = COALESCE($6, quick_buttons),
+             funnel_steps = COALESCE($7, funnel_steps),
              updated_at = NOW()
          WHERE tenant_id = $1`,
         [
@@ -53,6 +56,7 @@ export async function updateBotPersonality(
             data.language || null,
             data.welcomeMessage || null,
             data.quickButtons ? JSON.stringify(data.quickButtons) : null,
+            data.funnelSteps ? JSON.stringify(data.funnelSteps) : null,
         ]
     )
 }
