@@ -1,4 +1,4 @@
-export type MessageRole = 'bot' | 'user'
+export type MessageRole = 'bot' | 'user' | 'manager'
 
 export interface Message {
   id: string

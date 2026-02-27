@@ -27,6 +27,7 @@ export interface DialogSession {
     repair_type: string | null;
     segment: string | null;
     manual_rating: string | null;
+    is_human_managed?: boolean;
 }
 
 export interface DialogFilters {

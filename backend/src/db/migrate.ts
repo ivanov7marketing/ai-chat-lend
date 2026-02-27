@@ -268,6 +268,13 @@ export async function runMigrations() {
       ) THEN
         ALTER TABLE sessions ADD COLUMN manual_rating VARCHAR(30);
       END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sessions' AND column_name = 'is_human_managed'
+      ) THEN
+        ALTER TABLE sessions ADD COLUMN is_human_managed BOOLEAN DEFAULT FALSE;
+      END IF;
     END $$;
 
     -- ============================================================

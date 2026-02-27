@@ -21,6 +21,7 @@ export default function ChatWindow() {
         sendUserMessage,
         closeChat,
         tenantConfig,
+        isHumanManaged,
     } = useChatStore()
 
     const [inputValue, setInputValue] = useState('')
@@ -33,8 +34,9 @@ export default function ChatWindow() {
     const currentStep = FUNNEL_STEPS[currentFunnelStep]
 
     const lastMessage = messages[messages.length - 1]
-    const lastMessageIsBot = lastMessage?.role === 'bot'
-    const canShowButtons = lastMessageIsBot && !isTyping
+    const lastMessageRole = lastMessage?.role
+    const lastMessageIsBot = lastMessageRole === 'bot' || lastMessageRole === 'manager'
+    const canShowButtons = lastMessageIsBot && !isTyping && !isHumanManaged
 
     // Quick buttons: use tenant config if available, otherwise fallback
     const welcomeButtons = tenantConfig?.quickButtons || [
@@ -56,7 +58,7 @@ export default function ChatWindow() {
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
     const leadButtons = ['Telegram', 'MAX']
 
-    const showTextInput = canShowButtons && (
+    const showTextInput = (canShowButtons || isHumanManaged) && (
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
         (chatState === 'LEAD_CAPTURE' && !isTyping) ||
         chatState === 'FREE_CHAT'
@@ -77,8 +79,8 @@ export default function ChatWindow() {
     }
 
     // Bot display name and avatar from tenant config
-    const botName = tenant.bot.name || 'Макс'
-    const botAvatarUrl = tenant.bot.avatarUrl
+    const botName = isHumanManaged ? 'Менеджер' : (tenant.bot.name || 'Макс')
+    const botAvatarUrl = isHumanManaged ? null : tenant.bot.avatarUrl
 
     return (
         <div

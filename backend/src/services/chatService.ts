@@ -1,8 +1,17 @@
 import { pool } from '../db/client'
 import { searchKnowledge } from './ragService'
 
-export async function handleFreeChat(tenantId: string, sessionId: string, message: string): Promise<string> {
+export async function handleFreeChat(tenantId: string, sessionId: string, message: string): Promise<string | null> {
     try {
+        // 0. Check if session is human managed
+        const sessionRes = await pool.query(
+            `SELECT is_human_managed FROM sessions WHERE id = $1`,
+            [sessionId]
+        )
+        if (sessionRes.rows[0]?.is_human_managed) {
+            return null // Skip AI response if human is managing
+        }
+
         // 1. Fetch tenant bot settings and integrations
         const res = await pool.query(
             `SELECT 

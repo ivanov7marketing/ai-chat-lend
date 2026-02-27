@@ -25,6 +25,7 @@ interface ChatStore {
     funnelAnswers: FunnelAnswers
     isTyping: boolean
     isBotMessageReady: boolean
+    isHumanManaged: boolean
     availableSegments: string[]
     sessionId: string | null
     estimateMin: number
@@ -71,6 +72,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     funnelAnswers: {},
     isTyping: false,
     isBotMessageReady: false,
+    isHumanManaged: false,
     availableSegments: [],
     sessionId: null,
     estimateMin: 0,
@@ -121,6 +123,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
                 if (data.type === 'session_created') {
                     set({ sessionId: data.sessionId })
+                } else if (data.type === 'takeover_active') {
+                    set({ isHumanManaged: true })
+                } else if (data.type === 'message' && data.role === 'manager') {
+                    const msg: Message = {
+                        id: data.id || Date.now().toString(),
+                        role: 'manager',
+                        text: data.content,
+                        timestamp: Date.now(),
+                    }
+                    set((s) => ({ messages: [...s.messages, msg], isTyping: false }))
                 }
             } catch (e) {
                 console.error('WebSocket receive error:', e)
@@ -169,6 +181,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             funnelAnswers: {},
             currentFunnelStep: 0,
             sessionId: null, // Will be set by WebSocket
+            isHumanManaged: false,
         })
         get().connectWebSocket()
         get()._addBotMessage(welcomeMsg)

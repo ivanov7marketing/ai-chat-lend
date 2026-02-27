@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDialogDetail, updateDialogRating } from '../../services/adminApi';
 import type { DialogDetailData, DialogRating } from '../../types/admin';
-import { ArrowLeft, User, Bot, Headset, CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, User, Bot, Headset, CheckCircle, XCircle, AlertTriangle, RefreshCw, SendHorizonal } from 'lucide-react';
+import { useTenant } from '../../contexts/TenantContext';
 
 const RATINGS: { key: DialogRating; icon: typeof CheckCircle; label: string; emoji: string; color: string }[] = [
     { key: 'good', icon: CheckCircle, label: 'Качественный', emoji: '✅', color: 'text-green-600 hover:bg-green-50' },
@@ -13,9 +14,13 @@ const RATINGS: { key: DialogRating; icon: typeof CheckCircle; label: string; emo
 
 export default function DialogDetail() {
     const { id } = useParams();
+    const tenant = useTenant();
     const [data, setData] = useState<DialogDetailData | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeRating, setActiveRating] = useState<string | null>(null);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [inputValue, setInputValue] = useState('');
+    const [isHumanManaged, setIsHumanManaged] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -24,9 +29,53 @@ export default function DialogDetail() {
             .then((res) => {
                 setData(res);
                 setActiveRating(res?.lead?.manual_rating || null);
+                setIsHumanManaged(res?.session?.is_human_managed || false);
             })
             .finally(() => setLoading(false));
     }, [id]);
+
+    useEffect(() => {
+        if (!id || !tenant?.slug) return;
+        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const host = window.location.host;
+        const ws = new WebSocket(`${proto}://${host}/ws/${tenant.slug}?role=admin`);
+
+        ws.onopen = () => {
+            console.log('Admin WS connected');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const wsData = JSON.parse(event.data);
+                if (wsData.type === 'admin_ready') {
+                    ws.send(JSON.stringify({ type: 'admin_join', sessionId: id }));
+                } else if (wsData.type === 'takeover_active') {
+                    setIsHumanManaged(true);
+                } else if (wsData.type === 'message') {
+                    setData((prev) => {
+                        if (!prev) return prev;
+                        return {
+                            ...prev,
+                            messages: [...prev.messages, {
+                                id: wsData.id,
+                                role: wsData.role,
+                                content: wsData.content,
+                                created_at: new Date().toISOString()
+                            }]
+                        } as DialogDetailData;
+                    });
+                }
+            } catch (e) {
+                console.error('WS Error:', e);
+            }
+        };
+
+        setSocket(ws);
+
+        return () => {
+            ws.close();
+        };
+    }, [id, tenant?.slug]);
 
     const handleRating = async (rating: DialogRating) => {
         if (!id) return;
@@ -116,6 +165,48 @@ export default function DialogDetail() {
                             );
                         })
                     )}
+                </div>
+
+                {/* Manager Input */}
+                <div className="border-t border-gray-100 p-4 bg-white flex shrink-0">
+                    <div className="flex gap-2 items-center w-full">
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && inputValue.trim()) {
+                                    if (socket && socket.readyState === WebSocket.OPEN) {
+                                        socket.send(JSON.stringify({
+                                            type: 'manager_message',
+                                            content: inputValue.trim(),
+                                            id: Date.now().toString()
+                                        }));
+                                        setInputValue('');
+                                    }
+                                }
+                            }}
+                            disabled={!isHumanManaged || !socket || socket.readyState !== WebSocket.OPEN}
+                            placeholder={isHumanManaged ? 'Написать клиенту...' : 'Сначала перехватите диалог 👇'}
+                            className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-50 focus:border-primary-300 disabled:bg-gray-50 disabled:cursor-not-allowed"
+                        />
+                        <button
+                            onClick={() => {
+                                if (inputValue.trim() && socket && socket.readyState === WebSocket.OPEN) {
+                                    socket.send(JSON.stringify({
+                                        type: 'manager_message',
+                                        content: inputValue.trim(),
+                                        id: Date.now().toString()
+                                    }));
+                                    setInputValue('');
+                                }
+                            }}
+                            disabled={!isHumanManaged || !inputValue.trim() || !socket || socket.readyState !== WebSocket.OPEN}
+                            className="rounded-xl bg-secondary-500 hover:bg-secondary-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2.5 transition-colors duration-200 flex items-center justify-center shrink-0"
+                        >
+                            <SendHorizonal size={18} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -209,8 +300,8 @@ export default function DialogDetail() {
                                 key={r.key}
                                 onClick={() => handleRating(r.key)}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-200 ${activeRating === r.key
-                                        ? 'border-primary-300 bg-primary-50 text-primary-700'
-                                        : `border-gray-200 text-gray-600 ${r.color}`
+                                    ? 'border-primary-300 bg-primary-50 text-primary-700'
+                                    : `border-gray-200 text-gray-600 ${r.color}`
                                     }`}
                             >
                                 <span>{r.emoji}</span>
@@ -220,15 +311,26 @@ export default function DialogDetail() {
                     </div>
                 </div>
 
-                {/* Connect Button (placeholder) */}
-                <button
-                    disabled
-                    className="w-full px-4 py-3 bg-gray-100 text-gray-400 font-medium rounded-xl text-sm cursor-not-allowed"
-                    title="Функция подключения менеджера в разработке"
-                >
-                    <Headset className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
-                    Подключиться к чату
-                </button>
+                {/* Connect Button */}
+                {!isHumanManaged ? (
+                    <button
+                        onClick={() => {
+                            if (socket && socket.readyState === WebSocket.OPEN) {
+                                socket.send(JSON.stringify({ type: 'manager_takeover' }));
+                            }
+                        }}
+                        disabled={!socket || socket.readyState !== WebSocket.OPEN}
+                        className="w-full px-4 py-3 bg-secondary-500 hover:bg-secondary-600 text-white font-medium rounded-xl text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Headset className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                        Перехватить диалог
+                    </button>
+                ) : (
+                    <div className="w-full px-4 py-3 bg-green-50 text-green-700 font-medium rounded-xl text-sm border border-green-200 flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 inline mr-2" strokeWidth={1.5} />
+                        Вы управляете диалогом
+                    </div>
+                )}
             </div>
         </div>
     );

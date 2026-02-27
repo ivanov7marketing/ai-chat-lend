@@ -57,3 +57,10 @@ export async function updateSessionStatus(sessionId: string, status: string) {
         [status, sessionId]
     )
 }
+
+export async function setHumanManaged(sessionId: string, isHumanManaged: boolean = true) {
+    await pool.query(
+        `UPDATE sessions SET is_human_managed = $1 WHERE id = $2`,
+        [isHumanManaged, sessionId]
+    )
+}

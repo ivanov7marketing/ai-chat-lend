@@ -23,7 +23,7 @@ export async function getDialogsList(
 
     const res = await pool.query(
         `SELECT
-            s.id, s.created_at, s.status, s.utm_source, s.device, s.tenant_id,
+            s.id, s.created_at, s.status, s.utm_source, s.device, s.tenant_id, s.is_human_managed,
             l.contact_type, l.contact_value AS phone,
             l.estimate_min, l.estimate_max, l.selected_segment,
             (l.apartment_params->>'area') AS area,
