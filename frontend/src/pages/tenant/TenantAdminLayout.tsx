@@ -7,6 +7,9 @@ import {
     Bot,
     DollarSign,
     Plug,
+    Palette,
+    Users,
+    CreditCard,
     ArrowLeft,
     LogOut,
 } from 'lucide-react'
@@ -29,6 +32,9 @@ function TenantAdminContent() {
         { to: `/${slug}/admin/bot`, icon: Bot, label: 'Настройка бота' },
         { to: `/${slug}/admin/prices`, icon: DollarSign, label: 'Матрица цен' },
         { to: `/${slug}/admin/integrations`, icon: Plug, label: 'Интеграции' },
+        { to: `/${slug}/admin/branding`, icon: Palette, label: 'Брендинг' },
+        { to: `/${slug}/admin/team`, icon: Users, label: 'Команда' },
+        { to: `/${slug}/admin/billing`, icon: CreditCard, label: 'Биллинг' },
     ]
 
     return (

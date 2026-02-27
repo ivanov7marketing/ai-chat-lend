@@ -16,6 +16,9 @@ import AuditLogPage from './pages/superadmin/AuditLogPage'
 // Tenant pages
 import TenantLanding from './pages/tenant/TenantLanding'
 import TenantAdminLayout from './pages/tenant/TenantAdminLayout'
+import TenantBranding from './pages/tenant/TenantBranding'
+import TenantTeam from './pages/tenant/TenantTeam'
+import TenantBilling from './pages/tenant/TenantBilling'
 
 // Existing admin pages (reused in tenant admin context)
 import Dashboard from './pages/admin/Dashboard'
@@ -73,6 +76,9 @@ export default function App() {
                         <Route path="bot" element={<BotSettings />} />
                         <Route path="prices" element={<PricesList />} />
                         <Route path="integrations" element={<Integrations />} />
+                        <Route path="branding" element={<TenantBranding />} />
+                        <Route path="team" element={<TenantTeam />} />
+                        <Route path="billing" element={<TenantBilling />} />
                     </Route>
                 </Routes>
             </BrowserRouter>

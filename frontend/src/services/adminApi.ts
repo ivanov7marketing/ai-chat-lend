@@ -46,24 +46,8 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 // ============ Dashboard ============
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
-    // TODO: replace with real endpoint GET /api/admin/dashboard/metrics
     try {
-        const data = await apiFetch<{ data: DialogSession[]; total: number }>(
-            `${getAdminBase()}/dialogs?limit=10000`
-        );
-        const sessions = data.data || [];
-        const leads = sessions.filter((s) => s.status === 'converted');
-        return {
-            totalVisits: data.total,
-            chatOpened: sessions.length,
-            estimateStarted: Math.round(sessions.length * 0.7),
-            estimateCompleted: Math.round(sessions.length * 0.5),
-            leadsCreated: leads.length,
-            conversionRate: sessions.length
-                ? Math.round((leads.length / sessions.length) * 100)
-                : 0,
-            avgDialogDuration: '4 мин 32 сек',
-        };
+        return await apiFetch<DashboardMetrics>(`${getAdminBase()}/dashboard/metrics`);
     } catch {
         return {
             totalVisits: 0,
@@ -116,7 +100,7 @@ export async function getDialogDetail(
     id: string
 ): Promise<DialogDetailData | null> {
     try {
-        return await apiFetch<DialogDetailData>(`${getAdminBase()}/dialog/${id}`);
+        return await apiFetch<DialogDetailData>(`${getAdminBase()}/dialogs/${id}`);
     } catch {
         return null;
     }
@@ -126,8 +110,10 @@ export async function updateDialogRating(
     id: string,
     rating: DialogRating
 ): Promise<void> {
-    // TODO: implement backend PUT /api/admin/dialogs/:id/rating
-    console.log(`[mock] Rating dialog ${id} as ${rating}`);
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/dialogs/${id}/rating`, {
+        method: 'PUT',
+        body: JSON.stringify({ rating }),
+    });
 }
 
 // ============ Prices ============
@@ -148,115 +134,58 @@ export async function updatePrices(
 export async function addWorkType(
     data: NewWorkType
 ): Promise<{ success: boolean }> {
-    // TODO: implement backend POST /api/admin/prices
-    console.log('[mock] Adding work type:', data);
-    return { success: true };
+    return apiFetch<{ success: boolean }>(`${getAdminBase()}/prices`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+    });
 }
 
 // ============ Bot Personality ============
 
-const MOCK_PERSONALITY: BotPersonality = {
-    name: 'Макс',
-    tone: 'friendly',
-    language: 'ru',
-    welcomeMessage:
-        'Привет! Я Макс — AI-эксперт по ремонту квартир в Челябинске.\nПомогу рассчитать примерную стоимость ремонта, расскажу о технологиях\nи отвечу на любые вопросы.\n\nС чего начнём?',
-    quickButtons: [
-        { id: '1', text: 'Рассчитать стоимость ремонта', emoji: '🧮', action: 'start_funnel' },
-        { id: '2', text: 'Узнать сроки ремонта', emoji: '📅', action: 'ask_kb' },
-        { id: '3', text: 'О компании и гарантиях', emoji: '🏢', action: 'ask_kb' },
-        { id: '4', text: 'Советы по ремонту', emoji: '💡', action: 'ask_kb' },
-        { id: '5', text: 'Задать свой вопрос', emoji: '❓', action: 'custom' },
-    ],
-};
-
 export async function getBotPersonality(): Promise<BotPersonality> {
-    // TODO: GET /api/admin/bot/personality
-    return { ...MOCK_PERSONALITY };
+    return apiFetch<BotPersonality>(`${getAdminBase()}/bot/personality`);
 }
 
 export async function updateBotPersonality(
     data: BotPersonality
 ): Promise<void> {
-    // TODO: PUT /api/admin/bot/personality
-    console.log('[mock] Updating bot personality:', data);
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/bot/personality`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
 }
 
 // ============ Bot Segments ============
 
-const MOCK_SEGMENTS: RepairSegment[] = [
-    {
-        id: 1,
-        name: 'Эконом',
-        description: 'Базовый ремонт с сертифицированными материалами эконом-класса. Простые решения без архитектурных изысков.',
-        whatIncluded: '- Штукатурка/шпаклёвка стен\n- Покраска или обои\n- Ламинат 32 класс\n- Сантехника и электрика стандарт',
-        priceRangeMin: 15000,
-        priceRangeMax: 22000,
-        typicalMaterials: 'Knauf, Ceresit CT127, Tarkett',
-    },
-    {
-        id: 2,
-        name: 'Стандарт',
-        description: 'Качественный ремонт с оптимальным соотношением цены и результата.',
-        whatIncluded: '- Выравнивание стен по маякам\n- Декоративная штукатурка / обои под покраску\n- Ламинат 33 класс / керамогранит\n- Натяжные потолки\n- Электрика с автоматами ABB',
-        priceRangeMin: 22000,
-        priceRangeMax: 35000,
-        typicalMaterials: 'Knauf, Weber Vetonit, Quick-Step, Grohe',
-    },
-    {
-        id: 3,
-        name: 'Комфорт',
-        description: 'Ремонт повышенного качества с дизайнерскими решениями и премиальными материалами среднего сегмента.',
-        whatIncluded: '- Дизайн-проект (базовый)\n- Выравнивание стен и пола\n- Паркетная доска / плитка Kerama Marazzi\n- Многоуровневые потолки\n- Скрытая электрика\n- Сантехника Hansgrohe',
-        priceRangeMin: 35000,
-        priceRangeMax: 55000,
-        typicalMaterials: 'Kerama Marazzi, Hansgrohe, Quick-Step Impressive',
-    },
-    {
-        id: 4,
-        name: 'Премиум',
-        description: 'Эксклюзивный ремонт с полным дизайн-проектом, авторским надзором и топовыми материалами.',
-        whatIncluded: '- Полный дизайн-проект + авторский надзор\n- Перепланировка (при необходимости)\n- Штучный паркет / мрамор\n- Умный дом (базовый)\n- Встроенная мебель по проекту\n- Премиальная сантехника Duravit / Villeroy & Boch',
-        priceRangeMin: 55000,
-        priceRangeMax: 100000,
-        typicalMaterials: 'Duravit, Villeroy & Boch, Rimadesio, Laufen',
-    },
-];
-
 export async function getBotSegments(): Promise<RepairSegment[]> {
-    // TODO: GET /api/admin/bot/segments
-    return [...MOCK_SEGMENTS];
+    return apiFetch<RepairSegment[]>(`${getAdminBase()}/bot/segments`);
 }
 
 export async function updateBotSegment(
     segment: RepairSegment
 ): Promise<void> {
-    // TODO: PUT /api/admin/bot/segments/:id
-    console.log('[mock] Updating segment:', segment);
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/bot/segments/${segment.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(segment),
+    });
 }
 
 // ============ Bot Behavior ============
 
-const MOCK_BEHAVIOR: BotBehavior = {
-    triggerWords: ['дорого', 'не устраивает', 'хочу говорить с человеком', 'менеджер', 'сомневаюсь'],
-    maxMessagesWithoutCta: 5,
-    estimateDisclaimer:
-        'Данная смета является ориентировочной. Точная стоимость определяется после бесплатного замера. Не является публичной офертой.',
-    pdfTtlNotice:
-        'Внимание: ссылка на PDF активна 72 часа. Сохраните файл, если понадобится позже.',
-};
-
 export async function getBotBehavior(): Promise<BotBehavior> {
-    // TODO: GET /api/admin/bot/behavior
-    return { ...MOCK_BEHAVIOR };
+    return apiFetch<BotBehavior>(`${getAdminBase()}/bot/behavior`);
 }
 
 export async function updateBotBehavior(data: BotBehavior): Promise<void> {
-    // TODO: PUT /api/admin/bot/behavior
-    console.log('[mock] Updating bot behavior:', data);
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/bot/behavior`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
 }
 
 // ============ Knowledge Base ============
+// NOTE: Knowledge Base has no backend endpoints yet (MVP).
+// These functions return mock data until RAG module is implemented.
 
 const MOCK_DOCUMENTS: KnowledgeDocument[] = [
     { id: 1, filename: 'Прайс-лист 2026.pdf', uploadedAt: '2026-02-10T12:00:00Z', sizeBytes: 2400000, status: 'ready' },
@@ -288,20 +217,20 @@ const MOCK_GAPS: KnowledgeGap[] = [
 ];
 
 export async function getKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
-    // TODO: GET /api/admin/bot/knowledge_base
+    // TODO: GET /api/t/:slug/admin/bot/knowledge — pending RAG module
     return [...MOCK_DOCUMENTS];
 }
 
 export async function uploadDocument(
     _file: File
 ): Promise<{ success: boolean }> {
-    // TODO: POST /api/admin/bot/knowledge_base/upload
+    // TODO: POST /api/t/:slug/admin/bot/knowledge/upload — pending RAG module
     console.log('[mock] Uploading document');
     return { success: true };
 }
 
 export async function deleteDocument(_id: number): Promise<void> {
-    // TODO: DELETE /api/admin/bot/knowledge_base/:id
+    // TODO: DELETE /api/t/:slug/admin/bot/knowledge/:id — pending RAG module
     console.log('[mock] Deleting document', _id);
 }
 
@@ -315,59 +244,25 @@ export async function getKnowledgeGaps(): Promise<KnowledgeGap[]> {
 
 // ============ Integrations ============
 
-const MOCK_INTEGRATIONS: IntegrationSettings = {
-    routerAI: {
-        apiKey: 'sk-••••••••••••••••',
-        primaryModel: 'gpt-4o',
-        fallbackModel: 'claude-3-5-sonnet',
-        dailyTokenLimit: 1000000,
-        currentMonthUsage: 345200,
-        currentMonthCost: 2340,
-    },
-    telegram: {
-        botToken: '••••••••••:•••••••••••••••••••••',
-        chatId: '',
-        notificationTemplate:
-            '🆕 Новый лид!\n\n👤 Контакт: {contact}\n🏠 Квартира: {area} м², {rooms}-комнатная\n🔧 Тип: {type}, сегмент: {segment}\n💰 Вилка: от {estimate_min} до {estimate_max} руб.',
-    },
-    yandexMetrika: {
-        counterId: '',
-        events: {
-            chat_opened: true,
-            estimate_started: true,
-            estimate_completed: true,
-            lead_created: true,
-        },
-    },
-    amoCRM: {
-        webhookUrl: '',
-        apiKey: '',
-        fieldMapping: [
-            { systemField: 'contact_value', crmField: 'Телефон', crmFieldId: '' },
-            { systemField: 'apartment_params.area', crmField: 'Площадь', crmFieldId: '' },
-            { systemField: 'estimate_min', crmField: 'Бюджет от', crmFieldId: '' },
-            { systemField: 'estimate_max', crmField: 'Бюджет до', crmFieldId: '' },
-        ],
-    },
-};
-
 export async function getIntegrations(): Promise<IntegrationSettings> {
-    // TODO: GET /api/admin/integrations
-    return JSON.parse(JSON.stringify(MOCK_INTEGRATIONS));
+    return apiFetch<IntegrationSettings>(`${getAdminBase()}/integrations`);
 }
 
 export async function updateIntegration(
-    _service: string,
-    _data: unknown
+    service: string,
+    data: unknown
 ): Promise<void> {
-    // TODO: PUT /api/admin/integrations/:service
-    console.log(`[mock] Updating integration ${_service}`);
+    await apiFetch<{ success: boolean }>(`${getAdminBase()}/integrations/${service}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    });
 }
 
 export async function testIntegration(
     service: string
 ): Promise<{ success: boolean; message: string }> {
-    // TODO: POST /api/admin/integrations/:service/test
-    console.log(`[mock] Testing integration ${service}`);
-    return { success: true, message: 'Подключение успешно (mock)' };
+    return apiFetch<{ success: boolean; message: string }>(
+        `${getAdminBase()}/integrations/${service}/test`,
+        { method: 'POST' }
+    );
 }

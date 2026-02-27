@@ -183,3 +183,49 @@ export interface IntegrationSettings {
     yandexMetrika: YandexMetrikaSettings;
     amoCRM: AmoCRMSettings;
 }
+
+// ============ Branding ============
+
+export interface TenantBrandingData {
+    primaryColor: string;
+    secondaryColor: string;
+    pageTitle: string;
+    pageSubtitle: string;
+    heroImageUrl: string | null;
+    companyDescription: string;
+    footerText: string;
+    faviconUrl: string | null;
+    metaDescription: string;
+}
+
+// ============ Team ============
+
+export interface TeamMember {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    is_active: boolean;
+    created_at: string;
+    last_login_at: string | null;
+}
+
+// ============ Billing ============
+
+export interface UsageItem {
+    used: number;
+    limit: number;
+}
+
+export interface BillingData {
+    plan: string;
+    trialEndsAt: string | null;
+    createdAt: string;
+    usage: {
+        sessions: UsageItem;
+        messages: UsageItem;
+        leads: UsageItem;
+        tokens: UsageItem;
+        team: UsageItem;
+    };
+}

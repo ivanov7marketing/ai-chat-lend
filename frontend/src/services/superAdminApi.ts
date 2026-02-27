@@ -106,7 +106,7 @@ export async function getAuditLog(
         offset: String(offset),
     })
     try {
-        return await adminFetch(`/api/superadmin/audit-log?${params.toString()}`)
+        return await adminFetch(`/api/superadmin/audit?${params.toString()}`)
     } catch {
         return { data: [], total: 0 }
     }

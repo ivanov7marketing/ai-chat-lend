@@ -261,6 +261,13 @@ export async function runMigrations() {
       ) THEN
         ALTER TABLE estimates ADD COLUMN tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE;
       END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sessions' AND column_name = 'manual_rating'
+      ) THEN
+        ALTER TABLE sessions ADD COLUMN manual_rating VARCHAR(30);
+      END IF;
     END $$;
   `)
   console.log('Migrations complete')

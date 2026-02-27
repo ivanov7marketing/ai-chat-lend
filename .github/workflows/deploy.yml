@@ -20,6 +20,6 @@ jobs:
             cd ${{ secrets.SSH_PATH }}
             git fetch origin
             git reset --hard origin/main
-            docker compose build --no-cache frontend
+            docker compose build --no-cache frontend backend
             docker compose up -d
             docker image prune -f
