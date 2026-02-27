@@ -17,14 +17,14 @@ This was confirmed on 2026-02-26: even `echo "test"` fails when
 
 // turbo-all
 
-**ALWAYS set `Cwd` to the workspace root directory.**
+**ALWAYS set `Cwd` to the workspace root directory with a CAPITAL drive letter (e.g. `C:\`).**
 
 If a command needs to run inside a subdirectory, use `Set-Location` (PowerShell)
 or `Push-Location`/`Pop-Location` with `;` as separator (NOT `&&` — PowerShell
 does not support `&&` in older versions).
 
 ```
-Cwd:         c:\dev\ai-chat-lend                       ← always the root
+Cwd:         C:\dev\ai-chat-lend                       ← always the root, CAPITAL 'C'
 CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 ```
 
@@ -34,12 +34,12 @@ CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 
 | Goal | Cwd | CommandLine |
 |------|-----|-------------|
-| Build frontend | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
-| Install backend deps | `c:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
-| Git status | `c:\dev\ai-chat-lend` | `git status` |
-| Run dev server | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
-| Run tests in backend | `c:\dev\ai-chat-lend` | `Set-Location backend; npm test` |
-| Docker compose | `c:\dev\ai-chat-lend` | `docker compose up -d` |
+| Build frontend | `C:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
+| Install backend deps | `C:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
+| Git status | `C:\dev\ai-chat-lend` | `git status` |
+| Run dev server | `C:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
+| Run tests in backend | `C:\dev\ai-chat-lend` | `Set-Location backend; npm test` |
+| Docker compose | `C:\dev\ai-chat-lend` | `docker compose up -d` |
 
 ### ❌ Wrong
 
