@@ -114,11 +114,11 @@ export default function TenantDetail() {
     }
 
     const usageItems = [
-        { icon: Activity, label: 'Сессий', value: tenant.usage.sessionsCount },
-        { icon: MessageSquare, label: 'Сообщений', value: tenant.usage.messagesCount },
-        { icon: Target, label: 'Лидов', value: tenant.usage.leadsCount },
-        { icon: FileText, label: 'PDF', value: tenant.usage.pdfGenerated },
-        { icon: HardDrive, label: 'Хранилище', value: formatBytes(tenant.usage.storageBytes) },
+        { icon: Activity, label: 'Сессий', value: tenant?.usage?.sessionsCount ?? 0 },
+        { icon: MessageSquare, label: 'Сообщений', value: tenant?.usage?.messagesCount ?? 0 },
+        { icon: Target, label: 'Лидов', value: tenant?.usage?.leadsCount ?? 0 },
+        { icon: FileText, label: 'PDF', value: tenant?.usage?.pdfGenerated ?? 0 },
+        { icon: HardDrive, label: 'Хранилище', value: formatBytes(tenant?.usage?.storageBytes ?? 0) },
     ]
 
     return (
@@ -223,8 +223,8 @@ export default function TenantDetail() {
                         onClick={handleToggleBlock}
                         disabled={actionLoading}
                         className={`inline-flex items-center justify-center px-6 py-2.5 font-medium rounded-full shadow-sm transition-all duration-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed ${tenant.isActive
-                                ? 'bg-red-500 text-white hover:bg-red-600'
-                                : 'bg-green-500 text-white hover:bg-green-600'
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-green-500 text-white hover:bg-green-600'
                             }`}
                     >
                         {tenant.isActive ? (

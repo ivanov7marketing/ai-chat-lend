@@ -131,11 +131,35 @@ export async function superAdminRoutes(fastify: FastifyInstance) {
             return reply.status(404).send({ error: 'Tenant not found' })
         }
 
+        const usageRows = usageRes.rows
+        const currentUsage = usageRows.find(u =>
+            new Date(u.month).getMonth() === new Date().getMonth() &&
+            new Date(u.month).getFullYear() === new Date().getFullYear()
+        ) || {
+            sessions_count: 0,
+            messages_count: 0,
+            leads_count: 0,
+            tokens_used: 0,
+            pdf_generated: 0,
+            storage_bytes: 0
+        }
+
         return reply.send({
-            tenant: tenantRes.rows[0],
+            tenant: {
+                ...tenantRes.rows[0],
+                companyName: tenantRes.rows[0].company_name, // Mapping for frontend
+            },
             botSettings: botRes.rows[0] || null,
             branding: brandingRes.rows[0] || null,
-            usage: usageRes.rows,
+            usage: {
+                sessionsCount: currentUsage.sessions_count,
+                messagesCount: currentUsage.messages_count,
+                leadsCount: currentUsage.leads_count,
+                tokensUsed: currentUsage.tokens_used,
+                pdfGenerated: currentUsage.pdf_generated,
+                storageBytes: currentUsage.storage_bytes,
+            },
+            usageHistory: usageRes.rows,
             recentSessions: recentSessions.rows,
         })
     })
