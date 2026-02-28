@@ -351,6 +351,20 @@ export async function runMigrations() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_tenant_usage_daily_day ON tenant_usage_daily(tenant_id, day);
+
+    -- ============================================================
+    -- 17. Доп. поля в брендинг
+    -- ============================================================
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'tenant_branding' AND column_name = 'contact_phone'
+      ) THEN
+        ALTER TABLE tenant_branding ADD COLUMN contact_phone VARCHAR(20);
+        ALTER TABLE tenant_branding ADD COLUMN office_address TEXT;
+      END IF;
+    END $$;
   `)
   console.log('Migrations complete')
 }

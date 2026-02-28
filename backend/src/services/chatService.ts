@@ -94,7 +94,15 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         const limitCheck = await checkLimit(tenantId, 'tokens')
         if (!limitCheck.allowed) {
             console.warn(`[ChatService] Token limit reached for tenant ${tenantId}: ${limitCheck.reason}`);
-            return limitCheck.reason || 'Извините, лимит умных ответов исчерпан. Пожалуйста, обратитесь к менеджеру напрямую.'
+
+            // Fetch contact phone for the friendly message
+            const brandingRes = await pool.query(
+                `SELECT contact_phone FROM tenant_branding WHERE tenant_id = $1`,
+                [tenantId]
+            )
+            const phone = brandingRes.rows[0]?.contact_phone || '[номер телефона]'
+
+            return `В данный момент невозможно обработать Ваш запрос из-за повышенной нагрузки на сервер. Свяжитесь с менеджером по номеру ${phone}. Либо оставьте свой номер и мы Вам перезвоним 😊`
         }
 
         // 7. Call RouterAI Chat Completions

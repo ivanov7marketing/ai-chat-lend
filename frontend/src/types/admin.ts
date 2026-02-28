@@ -200,6 +200,8 @@ export interface TenantBrandingData {
     footerText: string;
     faviconUrl: string | null;
     metaDescription: string;
+    contactPhone?: string | null;
+    officeAddress?: string | null;
     customDomain?: string | null;
 }
 

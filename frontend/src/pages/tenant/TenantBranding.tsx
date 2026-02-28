@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getBranding, updateBranding, uploadFile, updateDomain, verifyDomain } from '../../services/tenantAdminApi';
 import type { TenantBrandingData } from '../../types/admin';
-import { Save, Loader2, Palette, Type, Image, FileText, CheckCircle, Upload, Trash2, Globe, ExternalLink, AlertCircle } from 'lucide-react';
+import { Save, Loader2, Palette, Type, Image, FileText, CheckCircle, Upload, Trash2, Globe, ExternalLink, AlertCircle, Phone, MapPin } from 'lucide-react';
 
 const INITIAL_BRANDING: TenantBrandingData = {
     primaryColor: '#22c55e',
@@ -13,6 +13,8 @@ const INITIAL_BRANDING: TenantBrandingData = {
     footerText: '',
     faviconUrl: null,
     metaDescription: '',
+    contactPhone: '',
+    officeAddress: '',
     customDomain: null,
 };
 
@@ -237,6 +239,46 @@ export default function TenantBranding() {
                             className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 resize-none"
                             placeholder="Юридическая информация..."
                         />
+                    </div>
+                </div>
+            </div>
+
+            {/* Contacts */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Phone className="w-5 h-5 text-primary-500" strokeWidth={1.5} />
+                    <h2 className="text-lg font-semibold text-gray-900">Контакты</h2>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Номер телефона (для уведомлений и чата)
+                        </label>
+                        <input
+                            type="text"
+                            value={data.contactPhone || ''}
+                            onChange={(e) => updateField('contactPhone', e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50"
+                            placeholder="+7 (999) 000-00-00"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">
+                            Этот номер будет показываться в чате при превышении лимитов.
+                        </p>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                            Адрес офиса
+                        </label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-3.5 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                value={data.officeAddress || ''}
+                                onChange={(e) => updateField('officeAddress', e.target.value)}
+                                className="w-full pl-11 pr-4 py-3 bg-white border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50"
+                                placeholder="г. Челябинск, ул. Ленина, д. 1"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

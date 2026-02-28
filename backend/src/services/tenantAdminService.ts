@@ -630,6 +630,8 @@ export async function getBranding(tenantId: string) {
         footerText: r.footer_text,
         faviconUrl: r.favicon_url,
         metaDescription: r.meta_description,
+        contactPhone: r.contact_phone,
+        officeAddress: r.office_address,
     }
 }
 
@@ -645,6 +647,8 @@ export async function updateBranding(
         footerText?: string
         faviconUrl?: string
         metaDescription?: string
+        contactPhone?: string
+        officeAddress?: string
     }
 ) {
     await pool.query(
@@ -658,6 +662,8 @@ export async function updateBranding(
              footer_text = COALESCE($8, footer_text),
              favicon_url = COALESCE($9, favicon_url),
              meta_description = COALESCE($10, meta_description),
+             contact_phone = COALESCE($11, contact_phone),
+             office_address = COALESCE($12, office_address),
              updated_at = NOW()
          WHERE tenant_id = $1`,
         [
@@ -671,6 +677,8 @@ export async function updateBranding(
             data.footerText || null,
             data.faviconUrl || null,
             data.metaDescription || null,
+            data.contactPhone || null,
+            data.officeAddress || null,
         ]
     )
 }
