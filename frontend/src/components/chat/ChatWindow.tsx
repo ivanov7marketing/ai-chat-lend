@@ -131,20 +131,17 @@ export default function ChatWindow() {
                     visible={chatState === 'FUNNEL'}
                 />
 
-                {/* Scrollable Main Area with Background Pattern */}
+                {/* Scrollable Main Area with Parallax Background */}
                 <div
                     className="flex-1 overflow-y-auto relative flex flex-col"
                     style={{
                         backgroundImage: 'url(/chat-bg.webp)',
-                        backgroundRepeat: 'repeat',
-                        backgroundSize: '350px',
-                        backgroundAttachment: 'local',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundAttachment: 'fixed',
                         backgroundColor: '#f8fafc'
                     }}
                 >
-                    {/* Overlay for readability */}
-                    <div className="absolute inset-0 bg-white/80 pointer-events-none z-0" />
-
                     <div className="relative z-10 flex-1 flex flex-col">
                         {/* Messages */}
                         <div className="px-4 py-4 flex flex-col gap-4">
