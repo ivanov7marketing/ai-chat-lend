@@ -220,7 +220,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     sendUserMessage: async (text: string) => {
-        if (text === '❓ Задать вопрос' && get().chatState === 'WELCOME') {
+        if (text === '❓ Задать вопрос') {
             set({ chatState: 'FREE_CHAT', isBotMessageReady: true })
             return
         }
@@ -401,10 +401,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
         if (chatState === 'LEAD_CAPTURE') {
             if (!funnelAnswers.contactChannel) {
-                if (text === '❓ Задать вопрос') {
-                    set({ chatState: 'FREE_CHAT', isBotMessageReady: true })
-                    return
-                }
                 const updatedAnswers = { ...funnelAnswers, contactChannel: text }
                 set({ funnelAnswers: updatedAnswers })
                 return

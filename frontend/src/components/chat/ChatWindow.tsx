@@ -55,11 +55,12 @@ export default function ChatWindow() {
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
     const leadButtons = ['Telegram', 'MAX', '❓ Задать вопрос']
 
-    const showTextInput = (canShowButtons || isHumanManaged) && (
-        (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
-        (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel && !isTyping) ||
-        chatState === 'FREE_CHAT'
-    )
+    const showTextInput = isHumanManaged || (!isTyping && (
+        chatState === 'FREE_CHAT' ||
+        (canShowButtons && chatState === 'FUNNEL' && currentStep?.type === 'text-input') ||
+        (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel) ||
+        (chatState === 'WELCOME' && false) // keep welcome hidden until button pressed
+    ))
 
     const handleSend = () => {
         if (showTextInput && inputValue.trim()) {
