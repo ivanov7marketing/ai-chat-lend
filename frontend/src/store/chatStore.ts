@@ -400,6 +400,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
 
         if (chatState === 'LEAD_CAPTURE') {
+            if (!funnelAnswers.contactChannel) {
+                if (text === '❓ Задать вопрос') {
+                    set({ chatState: 'FREE_CHAT', isBotMessageReady: true })
+                    return
+                }
+                const updatedAnswers = { ...funnelAnswers, contactChannel: text }
+                set({ funnelAnswers: updatedAnswers })
+                return
+            }
+
             const updatedAnswers = { ...funnelAnswers, phone: text }
             set({ funnelAnswers: updatedAnswers })
             await get().submitLead('phone', text)

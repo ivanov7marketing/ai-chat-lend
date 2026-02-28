@@ -53,7 +53,7 @@ export default function ChatWindow() {
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
-    const leadButtons = ['Telegram', 'MAX']
+    const leadButtons = ['Telegram', 'MAX', '❓ Задать вопрос']
 
     const showTextInput = (canShowButtons || isHumanManaged) && (
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
