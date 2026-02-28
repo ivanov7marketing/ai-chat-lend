@@ -32,7 +32,10 @@ export default function Settings() {
                                 className="w-full border-gray-200 rounded-lg text-sm px-3 py-2 border focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="gpt-4o">GPT-4o (Рекомендуется)</option>
+                                <option value="openai/gpt-5.2">GPT-5.2</option>
                                 <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
+                                <option value="deepseek/deepseek-v3.2">DeepSeek v3.2</option>
                                 <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                             </select>
                         </div>

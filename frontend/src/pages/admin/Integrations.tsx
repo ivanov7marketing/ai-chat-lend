@@ -17,6 +17,9 @@ import {
 const LLM_MODELS = [
     'gpt-4o',
     'claude-3-5-sonnet',
+    'openai/gpt-5.2',
+    'anthropic/claude-sonnet-4.6',
+    'deepseek/deepseek-v3.2',
     'gemini-1.5-pro',
     'gemini-1.5-flash',
     'mixtral-8x7b',
