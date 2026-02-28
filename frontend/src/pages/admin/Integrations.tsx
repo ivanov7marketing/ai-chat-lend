@@ -20,6 +20,67 @@ const LLM_MODELS = [
     'deepseek/deepseek-v3.2',
 ];
 
+const MaskedInput = ({ value, field, showKeys, toggleKeyVisibility, onChange }: {
+    value: string;
+    field: string;
+    showKeys: Record<string, boolean>;
+    toggleKeyVisibility: (field: string) => void;
+    onChange: (v: string) => void
+}) => (
+    <div className="relative">
+        <input
+            type={showKeys[field] ? 'text' : 'password'}
+            autoComplete="new-password"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200 font-mono text-sm"
+        />
+        <button
+            type="button"
+            onClick={() => toggleKeyVisibility(field)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+            {showKeys[field] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+    </div>
+);
+
+const TestButton = ({ service, testing, handleTest }: {
+    service: string;
+    testing: string | null;
+    handleTest: (service: string) => void;
+}) => (
+    <button
+        type="button"
+        onClick={() => handleTest(service)}
+        disabled={testing === service}
+        className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-full text-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50"
+    >
+        {testing === service ? (
+            <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+        ) : (
+            <Zap className="w-4 h-4" strokeWidth={1.5} />
+        )}
+        Проверить
+    </button>
+);
+
+const SaveButton = ({ service, saving, handleSave }: {
+    service: string;
+    saving: string | null;
+    handleSave: (service: string) => void;
+}) => (
+    <button
+        type="button"
+        onClick={() => handleSave(service)}
+        disabled={saving === service}
+        className="inline-flex items-center gap-1.5 px-5 py-2 bg-primary-500 text-white font-medium rounded-full shadow-sm text-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md disabled:opacity-50"
+    >
+        <Save className="w-4 h-4" strokeWidth={1.5} />
+        {saving === service ? 'Сохранение...' : 'Сохранить'}
+    </button>
+);
+
 export default function Integrations() {
     const [data, setData] = useState<IntegrationSettings | null>(null);
     const [loading, setLoading] = useState(true);
@@ -89,6 +150,7 @@ export default function Integrations() {
                             : (error || 'Не удалось загрузить данные интеграций.')}
                     </p>
                     <button
+                        type="button"
                         onClick={() => window.location.reload()}
                         className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition"
                     >
@@ -96,6 +158,7 @@ export default function Integrations() {
                     </button>
                     {error?.includes('401') && (
                         <button
+                            type="button"
                             onClick={() => {
                                 localStorage.removeItem('auth_token');
                                 window.location.href = '/login';
@@ -110,49 +173,7 @@ export default function Integrations() {
         );
     }
 
-    const MaskedInput = ({ value, field, onChange }: { value: string; field: string; onChange: (v: string) => void }) => (
-        <div className="relative">
-            <input
-                type={showKeys[field] ? 'text' : 'password'}
-                autoComplete="new-password"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200 font-mono text-sm"
-            />
-            <button
-                onClick={() => toggleKeyVisibility(field)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-                {showKeys[field] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-        </div>
-    );
-
-    const TestButton = ({ service }: { service: string }) => (
-        <button
-            onClick={() => handleTest(service)}
-            disabled={testing === service}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-full text-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50"
-        >
-            {testing === service ? (
-                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-            ) : (
-                <Zap className="w-4 h-4" strokeWidth={1.5} />
-            )}
-            Проверить
-        </button>
-    );
-
-    const SaveButton = ({ service }: { service: string }) => (
-        <button
-            onClick={() => handleSave(service)}
-            disabled={saving === service}
-            className="inline-flex items-center gap-1.5 px-5 py-2 bg-primary-500 text-white font-medium rounded-full shadow-sm text-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md disabled:opacity-50"
-        >
-            <Save className="w-4 h-4" strokeWidth={1.5} />
-            {saving === service ? 'Сохранение...' : 'Сохранить'}
-        </button>
-    );
+    const integrationsData = data;
 
     return (
         <div className="p-8 max-w-4xl mx-auto">
@@ -169,6 +190,7 @@ export default function Integrations() {
                     )}
                     {testResult.message}
                     <button
+                        type="button"
                         onClick={() => setTestResult(null)}
                         className="ml-auto text-xs opacity-50 hover:opacity-100"
                     >
@@ -193,17 +215,19 @@ export default function Integrations() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">API Key</label>
                             <MaskedInput
-                                value={data.routerAI.apiKey}
+                                value={integrationsData.routerAI.apiKey}
                                 field="routeraiKey"
-                                onChange={(v) => setData({ ...data, routerAI: { ...data.routerAI, apiKey: v } })}
+                                showKeys={showKeys}
+                                toggleKeyVisibility={toggleKeyVisibility}
+                                onChange={(v) => setData({ ...integrationsData, routerAI: { ...integrationsData.routerAI, apiKey: v } })}
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Основная модель</label>
                                 <select
-                                    value={data.routerAI.primaryModel}
-                                    onChange={(e) => setData({ ...data, routerAI: { ...data.routerAI, primaryModel: e.target.value } })}
+                                    value={integrationsData.routerAI.primaryModel}
+                                    onChange={(e) => setData({ ...integrationsData, routerAI: { ...integrationsData.routerAI, primaryModel: e.target.value } })}
                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                                 >
                                     {LLM_MODELS.map((m) => (
@@ -214,8 +238,8 @@ export default function Integrations() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Fallback-модель</label>
                                 <select
-                                    value={data.routerAI.fallbackModel}
-                                    onChange={(e) => setData({ ...data, routerAI: { ...data.routerAI, fallbackModel: e.target.value } })}
+                                    value={integrationsData.routerAI.fallbackModel}
+                                    onChange={(e) => setData({ ...integrationsData, routerAI: { ...integrationsData.routerAI, fallbackModel: e.target.value } })}
                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                                 >
                                     {LLM_MODELS.map((m) => (
@@ -229,21 +253,21 @@ export default function Integrations() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Дневной лимит токенов</label>
                                 <input
                                     type="number"
-                                    value={data.routerAI.dailyTokenLimit}
-                                    onChange={(e) => setData({ ...data, routerAI: { ...data.routerAI, dailyTokenLimit: Number(e.target.value) } })}
+                                    value={integrationsData.routerAI.dailyTokenLimit}
+                                    onChange={(e) => setData({ ...integrationsData, routerAI: { ...integrationsData.routerAI, dailyTokenLimit: Number(e.target.value) } })}
                                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Расход за месяц</label>
                                 <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 text-sm">
-                                    {data.routerAI.currentMonthUsage.toLocaleString('ru')} токенов • {data.routerAI.currentMonthCost.toLocaleString('ru')} ₽
+                                    {integrationsData.routerAI.currentMonthUsage.toLocaleString('ru')} токенов • {integrationsData.routerAI.currentMonthCost.toLocaleString('ru')} ₽
                                 </div>
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
-                            <TestButton service="routerAI" />
-                            <SaveButton service="routerAI" />
+                            <TestButton service="routerAI" testing={testing} handleTest={handleTest} />
+                            <SaveButton service="routerAI" saving={saving} handleSave={handleSave} />
                         </div>
                     </div>
                 </section>
@@ -263,17 +287,19 @@ export default function Integrations() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Bot Token</label>
                             <MaskedInput
-                                value={data.telegram.botToken}
+                                value={integrationsData.telegram.botToken}
                                 field="telegramToken"
-                                onChange={(v) => setData({ ...data, telegram: { ...data.telegram, botToken: v } })}
+                                showKeys={showKeys}
+                                toggleKeyVisibility={toggleKeyVisibility}
+                                onChange={(v) => setData({ ...integrationsData, telegram: { ...integrationsData.telegram, botToken: v } })}
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Chat ID менеджера</label>
                             <input
                                 type="text"
-                                value={data.telegram.chatId}
-                                onChange={(e) => setData({ ...data, telegram: { ...data.telegram, chatId: e.target.value } })}
+                                value={integrationsData.telegram.chatId}
+                                onChange={(e) => setData({ ...integrationsData, telegram: { ...integrationsData.telegram, chatId: e.target.value } })}
                                 placeholder="Получить через @userinfobot"
                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                             />
@@ -281,8 +307,8 @@ export default function Integrations() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Шаблон уведомления</label>
                             <textarea
-                                value={data.telegram.notificationTemplate}
-                                onChange={(e) => setData({ ...data, telegram: { ...data.telegram, notificationTemplate: e.target.value } })}
+                                value={integrationsData.telegram.notificationTemplate}
+                                onChange={(e) => setData({ ...integrationsData, telegram: { ...integrationsData.telegram, notificationTemplate: e.target.value } })}
                                 rows={6}
                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200 resize-y font-mono text-sm"
                             />
@@ -291,8 +317,8 @@ export default function Integrations() {
                             </p>
                         </div>
                         <div className="flex gap-3 pt-2">
-                            <TestButton service="telegram" />
-                            <SaveButton service="telegram" />
+                            <TestButton service="telegram" testing={testing} handleTest={handleTest} />
+                            <SaveButton service="telegram" saving={saving} handleSave={handleSave} />
                         </div>
                     </div>
                 </section>
@@ -313,8 +339,8 @@ export default function Integrations() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Номер счётчика</label>
                             <input
                                 type="text"
-                                value={data.yandexMetrika.counterId}
-                                onChange={(e) => setData({ ...data, yandexMetrika: { ...data.yandexMetrika, counterId: e.target.value } })}
+                                value={integrationsData.yandexMetrika.counterId}
+                                onChange={(e) => setData({ ...integrationsData, yandexMetrika: { ...integrationsData.yandexMetrika, counterId: e.target.value } })}
                                 placeholder="12345678"
                                 className="w-full max-w-xs px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                             />
@@ -322,17 +348,17 @@ export default function Integrations() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Отслеживаемые события</label>
                             <div className="space-y-2">
-                                {(Object.keys(data.yandexMetrika.events) as Array<keyof typeof data.yandexMetrika.events>).map((event) => (
+                                {(Object.keys(integrationsData.yandexMetrika.events) as Array<keyof typeof integrationsData.yandexMetrika.events>).map((event) => (
                                     <label key={event} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors duration-200">
                                         <input
                                             type="checkbox"
-                                            checked={data.yandexMetrika.events[event]}
+                                            checked={integrationsData.yandexMetrika.events[event]}
                                             onChange={(e) =>
                                                 setData({
-                                                    ...data,
+                                                    ...integrationsData,
                                                     yandexMetrika: {
-                                                        ...data.yandexMetrika,
-                                                        events: { ...data.yandexMetrika.events, [event]: e.target.checked },
+                                                        ...integrationsData.yandexMetrika,
+                                                        events: { ...integrationsData.yandexMetrika.events, [event]: e.target.checked },
                                                     },
                                                 })
                                             }
@@ -344,7 +370,7 @@ export default function Integrations() {
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
-                            <SaveButton service="yandexMetrika" />
+                            <SaveButton service="yandexMetrika" saving={saving} handleSave={handleSave} />
                         </div>
                     </div>
                 </section>
@@ -365,8 +391,8 @@ export default function Integrations() {
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">Webhook URL</label>
                             <input
                                 type="text"
-                                value={data.amoCRM.webhookUrl}
-                                onChange={(e) => setData({ ...data, amoCRM: { ...data.amoCRM, webhookUrl: e.target.value } })}
+                                value={integrationsData.amoCRM.webhookUrl}
+                                onChange={(e) => setData({ ...integrationsData, amoCRM: { ...integrationsData.amoCRM, webhookUrl: e.target.value } })}
                                 placeholder="https://your-domain.amocrm.ru/api/v4/leads"
                                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
                             />
@@ -374,9 +400,11 @@ export default function Integrations() {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">API Key / OAuth Token</label>
                             <MaskedInput
-                                value={data.amoCRM.apiKey}
+                                value={integrationsData.amoCRM.apiKey}
                                 field="amocrmKey"
-                                onChange={(v) => setData({ ...data, amoCRM: { ...data.amoCRM, apiKey: v } })}
+                                showKeys={showKeys}
+                                toggleKeyVisibility={toggleKeyVisibility}
+                                onChange={(v) => setData({ ...integrationsData, amoCRM: { ...integrationsData.amoCRM, apiKey: v } })}
                             />
                         </div>
                         <div>
@@ -391,7 +419,7 @@ export default function Integrations() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {data.amoCRM.fieldMapping.map((mapping, i) => (
+                                        {integrationsData.amoCRM.fieldMapping.map((mapping, i) => (
                                             <tr key={i} className="border-b border-gray-100">
                                                 <td className="px-4 py-2 text-gray-600 font-mono text-xs">{mapping.systemField}</td>
                                                 <td className="px-4 py-2 text-gray-700">{mapping.crmField}</td>
@@ -400,9 +428,9 @@ export default function Integrations() {
                                                         type="text"
                                                         value={mapping.crmFieldId}
                                                         onChange={(e) => {
-                                                            const newMapping = [...data.amoCRM.fieldMapping];
+                                                            const newMapping = [...integrationsData.amoCRM.fieldMapping];
                                                             newMapping[i] = { ...newMapping[i], crmFieldId: e.target.value };
-                                                            setData({ ...data, amoCRM: { ...data.amoCRM, fieldMapping: newMapping } });
+                                                            setData({ ...integrationsData, amoCRM: { ...integrationsData.amoCRM, fieldMapping: newMapping } });
                                                         }}
                                                         placeholder="ID"
                                                         className="w-24 px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs outline-none focus:border-primary-500 transition-all duration-200"
@@ -415,8 +443,8 @@ export default function Integrations() {
                             </div>
                         </div>
                         <div className="flex gap-3 pt-2">
-                            <TestButton service="amoCRM" />
-                            <SaveButton service="amoCRM" />
+                            <TestButton service="amoCRM" testing={testing} handleTest={handleTest} />
+                            <SaveButton service="amoCRM" saving={saving} handleSave={handleSave} />
                         </div>
                     </div>
                 </section>

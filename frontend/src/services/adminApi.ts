@@ -282,7 +282,10 @@ export async function testIntegration(
 ): Promise<{ success: boolean; message: string }> {
     return apiFetch<{ success: boolean; message: string }>(
         `${getAdminBase()}/integrations/${service}/test`,
-        { method: 'POST' }
+        {
+            method: 'POST',
+            body: JSON.stringify({})
+        }
     );
 }
 
