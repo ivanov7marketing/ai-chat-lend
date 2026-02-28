@@ -15,16 +15,18 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
             return null
         }
 
-        // 1. Fetch tenant bot settings and integrations
+        // 1. Fetch tenant bot settings, integrations and branding
         console.log(`[ChatService] Fetching settings for tenant ${tenantId}`);
         const res = await pool.query(
             `SELECT 
                 b.bot_name, b.system_prompt_override, b.tone,
                 i.routerai_api_key, i.routerai_primary_model,
-                bh.trigger_words
+                bh.trigger_words,
+                br.contact_phone
              FROM tenant_bot_settings b
              JOIN tenant_integrations i ON b.tenant_id = i.tenant_id
              JOIN tenant_bot_behavior bh ON b.tenant_id = bh.tenant_id
+             LEFT JOIN tenant_branding br ON b.tenant_id = br.tenant_id
              WHERE b.tenant_id = $1`,
             [tenantId]
         )
@@ -96,9 +98,17 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         const context = await searchKnowledge(tenantId, message, 3)
 
         // 4. Construct System Prompt
+        const contactPhone = settings.contact_phone || '+7 (999) 000-00-00'
         let systemPrompt = settings.system_prompt_override ||
             `Ты - ИИ-эксперт по имени ${botName}, помогающий клиентам компании с ремонтом квартир.
-Отвечай вежливо, профессионально и кратко.`
+Отвечай вежливо, профессионально и кратко.
+
+ВАЖНО: Если пользователь выразил желание рассчитать стоимость ремонта, составить смету или узнать цену своего ремонта, ты должен ОБЯЗАТЕЛЬНО включить в свой ответ тег [TRIGGER_FUNNEL]. 
+Например: "Конечно! Давайте я помогу вам с расчетом. [TRIGGER_FUNNEL]" или "Чтобы узнать точную стоимость, мне нужно задать вам несколько вопросов. [TRIGGER_FUNNEL]".
+
+Если пользователь хочет связаться с менеджером, задать сложный вопрос или говорит, что ИИ не справляется:
+1. Обязательно предложи позвонить по номеру: ${contactPhone}
+2. Предложи пользователю просто написать свой номер телефона прямо здесь в чате, чтобы менеджер перезвонил ему в ближайшее время.`
 
         if (context) {
             systemPrompt += `\n\nИспользуй следующую информацию из базы знаний компании для ответа на вопрос:\n"""\n${context}\n"""\nЕсли ответа нет в тексте выше, скажи, что нужно уточнить у менеджера.`
@@ -129,15 +139,7 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         const limitCheck = await checkLimit(tenantId, 'tokens')
         if (!limitCheck.allowed) {
             console.warn(`[ChatService] Token limit reached for tenant ${tenantId}: ${limitCheck.reason}`);
-
-            // Fetch contact phone for the friendly message
-            const brandingRes = await pool.query(
-                `SELECT contact_phone FROM tenant_branding WHERE tenant_id = $1`,
-                [tenantId]
-            )
-            const phone = brandingRes.rows[0]?.contact_phone || '[номер телефона]'
-
-            return `В данный момент невозможно обработать Ваш запрос из-за повышенной нагрузки на сервер. Свяжитесь с менеджером по номеру ${phone}. Либо оставьте свой номер и мы Вам перезвоним 😊`
+            return `В данный момент невозможно обработать Ваш запрос из-за повышенной нагрузки на сервер. Свяжитесь с менеджером по номеру ${contactPhone}. Либо оставьте свой номер и мы Вам перезвоним 😊`
         }
 
         // 7. Call RouterAI Chat Completions
