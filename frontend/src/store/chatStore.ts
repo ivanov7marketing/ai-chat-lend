@@ -220,17 +220,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     sendUserMessage: async (text: string) => {
-        if (text === '❓ Задать вопрос') {
-            set({ chatState: 'FREE_CHAT', isBotMessageReady: true })
-            return
-        }
-
         const userMsg: Message = {
             id: Date.now().toString(),
             role: 'user',
             text,
             timestamp: Date.now(),
         }
+
+        if (text === '❓ Задать вопрос') {
+            set((s) => ({ messages: [...s.messages, userMsg], chatState: 'FREE_CHAT', isBotMessageReady: false }))
+            setTimeout(() => {
+                const { _addBotMessage } = get()
+                _addBotMessage('Напишите свой вопрос 👇')
+                set({ isBotMessageReady: true })
+            }, 600)
+            return
+        }
+
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
