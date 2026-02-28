@@ -93,8 +93,8 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         // 6. Check token limit before calling
         const limitCheck = await checkLimit(tenantId, 'tokens')
         if (!limitCheck.allowed) {
-            console.warn(`[ChatService] Token limit reached for tenant ${tenantId}`);
-            return 'Извините, лимит умных ответов на этот месяц исчерпан. Пожалуйста, обратитесь к менеджеру напрямую.'
+            console.warn(`[ChatService] Token limit reached for tenant ${tenantId}: ${limitCheck.reason}`);
+            return limitCheck.reason || 'Извините, лимит умных ответов исчерпан. Пожалуйста, обратитесь к менеджеру напрямую.'
         }
 
         // 7. Call RouterAI Chat Completions

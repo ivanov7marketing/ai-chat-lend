@@ -339,6 +339,18 @@ export async function runMigrations() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_tenant_canned_responses ON tenant_canned_responses(tenant_id);
+
+    -- ============================================================
+    -- 16. Ежедневное использование (для кастомных лимитов)
+    -- ============================================================
+    CREATE TABLE IF NOT EXISTS tenant_usage_daily (
+      tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+      day DATE NOT NULL DEFAULT CURRENT_DATE,
+      tokens_used BIGINT DEFAULT 0,
+      UNIQUE(tenant_id, day)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tenant_usage_daily_day ON tenant_usage_daily(tenant_id, day);
   `)
   console.log('Migrations complete')
 }

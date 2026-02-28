@@ -67,8 +67,34 @@ export async function checkLimit(tenantId: string, resourceType: 'sessions' | 'm
         case 'tokens': currentUsage = Number(usage.tokens_used); break;
     }
 
+    // 1. Check Monthly Plan Limit
     if (currentUsage >= limits[resourceType]) {
         return { allowed: false, reason: `Исчерпан лимит ${resourceType} для тарифа ${plan} (${limits[resourceType]})` }
+    }
+
+    // 2. Custom Daily Token Limit Check (only for tokens)
+    if (resourceType === 'tokens') {
+        const integrationRes = await pool.query(
+            `SELECT routerai_daily_token_limit FROM tenant_integrations WHERE tenant_id = $1`,
+            [tenantId]
+        )
+        const dailyLimit = integrationRes.rows[0]?.routerai_daily_token_limit
+
+        if (dailyLimit && dailyLimit > 0) {
+            const dailyUsageRes = await pool.query(
+                `SELECT tokens_used FROM tenant_usage_daily 
+                 WHERE tenant_id = $1 AND day = CURRENT_DATE`,
+                [tenantId]
+            )
+            const tokensUsedToday = Number(dailyUsageRes.rows[0]?.tokens_used || 0)
+
+            if (tokensUsedToday >= dailyLimit) {
+                return {
+                    allowed: false,
+                    reason: `Превышен ваш дневной лимит токенов (${dailyLimit}). Пожалуйста, увеличьте лимит в настройках или подождите начала нового дня.`
+                }
+            }
+        }
     }
 
     return { allowed: true }

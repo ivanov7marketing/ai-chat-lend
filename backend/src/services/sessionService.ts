@@ -15,6 +15,17 @@ export async function incrementTenantUsage(
          DO UPDATE SET ${metric} = tenant_usage.${metric} + $2`,
         [tenantId, value]
     )
+
+    // Daily tracking for tokens
+    if (metric === 'tokens_used') {
+        await pool.query(
+            `INSERT INTO tenant_usage_daily (tenant_id, day, tokens_used)
+             VALUES ($1, CURRENT_DATE, $2)
+             ON CONFLICT (tenant_id, day)
+             DO UPDATE SET tokens_used = tenant_usage_daily.tokens_used + $2`,
+            [tenantId, value]
+        )
+    }
 }
 
 export async function createSession(utmSource?: string, device?: string, tenantId?: string) {
