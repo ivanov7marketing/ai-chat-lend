@@ -239,7 +239,7 @@ export async function getIntegrations(tenantId: string) {
     const r = res.rows[0]
     return {
         routerAI: {
-            apiKey: r.routerai_api_key ? '••••••••' : '',
+            apiKey: r.routerai_api_key ? '••••' + '••••'.repeat(5) : '',
             primaryModel: r.routerai_primary_model,
             fallbackModel: r.routerai_fallback_model,
             dailyTokenLimit: r.routerai_daily_token_limit,
@@ -247,7 +247,7 @@ export async function getIntegrations(tenantId: string) {
             currentMonthCost: 0,
         },
         telegram: {
-            botToken: r.telegram_bot_token ? '••••••••' : '',
+            botToken: r.telegram_bot_token ? '••••' + '••••'.repeat(5) : '',
             chatId: r.telegram_chat_id || '',
             notificationTemplate: r.telegram_notification_template || '',
         },
@@ -262,7 +262,7 @@ export async function getIntegrations(tenantId: string) {
         },
         amoCRM: {
             webhookUrl: r.amocrm_webhook_url || '',
-            apiKey: r.amocrm_api_key ? '••••••••' : '',
+            apiKey: r.amocrm_api_key ? '••••' + '••••'.repeat(5) : '',
             fieldMapping: r.amocrm_field_mapping || [],
         },
     }

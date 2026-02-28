@@ -78,6 +78,7 @@ export default function Integrations() {
         <div className="relative">
             <input
                 type={showKeys[field] ? 'text' : 'password'}
+                autoComplete="new-password"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className="w-full px-4 py-3 pr-10 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200 font-mono text-sm"
