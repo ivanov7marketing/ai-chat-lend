@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getBotPersonality, updateBotPersonality, uploadFile } from '../../../services/adminApi';
-import type { BotPersonality as BotPersonalityType, QuickButton } from '../../../types/admin';
-import { Save, Plus, X, GripVertical, Upload, Trash2, Camera } from 'lucide-react';
+import type { BotPersonality as BotPersonalityType } from '../../../types/admin';
+import { Save, X, Upload, Trash2, Camera } from 'lucide-react';
 
 export default function BotPersonality() {
     const [data, setData] = useState<BotPersonalityType | null>(null);
@@ -36,32 +36,6 @@ export default function BotPersonality() {
         } finally {
             setSaving(false);
         }
-    };
-
-    const updateButton = (id: string, field: keyof QuickButton, value: string) => {
-        if (!data) return;
-        setData({
-            ...data,
-            quickButtons: data.quickButtons.map((b: QuickButton) =>
-                b.id === id ? { ...b, [field]: value } : b
-            ),
-        });
-    };
-
-    const removeButton = (id: string) => {
-        if (!data) return;
-        setData({ ...data, quickButtons: data.quickButtons.filter((b: QuickButton) => b.id !== id) });
-    };
-
-    const addButton = () => {
-        if (!data || data.quickButtons.length >= 6) return;
-        const newBtn: QuickButton = {
-            id: Date.now().toString(),
-            text: '',
-            emoji: '💬',
-            action: 'custom',
-        };
-        setData({ ...data, quickButtons: [...data.quickButtons, newBtn] });
     };
 
     if (loading) {
@@ -164,66 +138,6 @@ export default function BotPersonality() {
                 <p className="text-xs text-gray-400 mt-2">Поддерживает Markdown-разметку</p>
             </section>
 
-            {/* Quick Buttons */}
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        Быстрые кнопки
-                        <span className="text-sm font-normal text-gray-400 ml-2">
-                            ({data.quickButtons.length}/6)
-                        </span>
-                    </h2>
-                    {data.quickButtons.length < 6 && (
-                        <button
-                            onClick={addButton}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-600 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-primary-100"
-                        >
-                            <Plus className="w-4 h-4" strokeWidth={1.5} />
-                            Добавить
-                        </button>
-                    )}
-                </div>
-
-                <div className="space-y-3">
-                    {data.quickButtons.map((btn: QuickButton) => (
-                        <div
-                            key={btn.id}
-                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100"
-                        >
-                            <GripVertical className="w-4 h-4 text-gray-300 shrink-0 cursor-grab" strokeWidth={1.5} />
-                            <input
-                                type="text"
-                                value={btn.emoji}
-                                onChange={(e) => updateButton(btn.id, 'emoji', e.target.value)}
-                                className="w-12 px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-center text-sm outline-none focus:border-primary-500"
-                            />
-                            <input
-                                type="text"
-                                value={btn.text}
-                                onChange={(e) => updateButton(btn.id, 'text', e.target.value)}
-                                maxLength={50}
-                                className="flex-1 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:border-primary-500"
-                                placeholder="Текст кнопки"
-                            />
-                            <select
-                                value={btn.action}
-                                onChange={(e) => updateButton(btn.id, 'action', e.target.value)}
-                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 outline-none focus:border-primary-500"
-                            >
-                                <option value="start_funnel">Начать воронку</option>
-                                <option value="ask_kb">Вопрос из БЗ</option>
-                                <option value="custom">Произвольный</option>
-                            </select>
-                            <button
-                                onClick={() => removeButton(btn.id)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
-                            >
-                                <X className="w-4 h-4" strokeWidth={1.5} />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </section>
 
             {/* Dynamic Funnel Editor */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">

@@ -38,13 +38,10 @@ export default function ChatWindow() {
     const lastMessageIsBot = lastMessageRole === 'bot' || lastMessageRole === 'manager'
     const canShowButtons = lastMessageIsBot && !isTyping && !isHumanManaged
 
-    // Quick buttons: use tenant config if available, otherwise fallback
-    const welcomeButtons = tenantConfig?.quickButtons || [
-        '🧮 Рассчитать стоимость ремонта',
-        '📅 Узнать сроки ремонта',
-        '🏢 О компании и гарантиях',
-        '💡 Советы по ремонту',
-        '❓ Задать свой вопрос',
+    // Quick buttons: hardcoded to 2 options as per updated requirements
+    const welcomeButtons = [
+        '🧮 Рассчитать стоимость',
+        '❓ Задать вопрос'
     ]
 
     const showQuickButtons =
