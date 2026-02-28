@@ -104,6 +104,10 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
             `Ты - ИИ-эксперт по имени ${botName}, помогающий клиентам компании с ремонтом квартир.
 Отвечай вежливо, профессионально и кратко.`
 
+        // Context-aware instruction to avoid repeated greetings
+        const convInstruction = `
+ВАЖНО: Ты находишься в режиме продолжения диалога. Если диалог уже идет (есть история сообщений), НЕ здоровайся повторно (не говори "Привет", "Добрый день" и т.д.). Сразу переходи к сути ответа.`
+
         const mandatoryInstructions = `
 ВАЖНО: Если пользователь выразил желание рассчитать стоимость ремонта, составить смету или узнать цену своего ремонта — ты должен СТРОГО ответить фразой: "Конечно! Давайте рассчитаем стоимость вашего ремонта. [TRIGGER_FUNNEL]". 
 Никогда не пытайся проводить опрос самостоятельно, если ты включил [TRIGGER_FUNNEL]. Просто выдай эту фразу и остановись.
@@ -112,7 +116,29 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
 1. Обязательно предложи позвонить по номеру: ${contactPhone}
 2. Предложи пользователю просто написать свой номер телефона прямо здесь в чате, чтобы менеджер перезвонил ему в ближайшее время.`
 
-        let systemPrompt = `${basePrompt}\n\n${mandatoryInstructions}`
+        let systemPrompt = `${basePrompt}\n\n${convInstruction}\n\n${mandatoryInstructions}`
+
+        // Try to fetch lead data (funnel answers) for context if available
+        try {
+            const leadRes = await pool.query(
+                `SELECT apartment_params, selected_segment FROM leads WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`,
+                [sessionId]
+            )
+            if (leadRes.rows.length > 0) {
+                const lead = leadRes.rows[0]
+                const p = lead.apartment_params || {}
+                systemPrompt += `\n\nТЕКУЩИЙ КОНТЕКСТ ОБЪЕКТА ПОЛЬЗОВАТЕЛЯ:
+- Площадь: ${p.area} м²
+- Комнат: ${p.rooms}
+- Тип ремонта: ${p.repairType}
+- Дизайн-проект: ${p.design || 'Не указано'}
+- Состояние: ${p.condition || 'Не указано'}
+- Выбранный сегмент сметы: ${lead.selected_segment || 'Не выбран'}
+Используй эти данные, если вопрос пользователя касается его конкретного объекта.`
+            }
+        } catch (err) {
+            console.error('[ChatService] Error fetching lead context:', err)
+        }
 
         if (context) {
             systemPrompt += `\n\nИспользуй следующую информацию из базы знаний компании для ответа на вопрос:\n"""\n${context}\n"""\nЕсли ответа нет в тексте выше, скажи, что нужно уточнить у менеджера.`
@@ -120,12 +146,12 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
             systemPrompt += `\n\nВ базе знаний нет релевантной информации по этому вопросу. Отвечай общими фактами или предложи связаться с менеджером.`
         }
 
-        // 5. Fetch Chat History from DB (last 5 messages for context)
+        // 5. Fetch Chat History from DB (last 15 messages for context)
         console.log(`[ChatService] Fetching history for session ${sessionId}`);
         const historyRes = await pool.query(
             `SELECT role, content FROM messages 
              WHERE session_id = $1 
-             ORDER BY created_at DESC LIMIT 5`,
+             ORDER BY created_at DESC LIMIT 15`,
             [sessionId]
         )
         const dbHistory = historyRes.rows.reverse()
