@@ -240,6 +240,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
     sendUserMessage: async (text: string) => {
+        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
+        const funnelSteps = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
+            ? tenantConfig.funnelSteps
+            : FUNNEL_STEPS
+
         const userMsg: Message = {
             id: Date.now().toString(),
             role: 'user',
@@ -250,19 +255,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         if (text === '❓ Задать вопрос') {
             set((s) => ({ messages: [...s.messages, userMsg], chatState: 'FREE_CHAT', isBotMessageReady: false }))
             setTimeout(() => {
-                const { _addBotMessage } = get()
                 _addBotMessage('Напишите свой вопрос 👇')
                 set({ isBotMessageReady: true })
             }, 600)
             return
         }
-
-        set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
-
-        const { chatState, currentFunnelStep, funnelAnswers, _addBotMessage, socket, tenantConfig } = get()
-        const funnelSteps = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
-            ? tenantConfig.funnelSteps
-            : FUNNEL_STEPS
 
         if (text.startsWith('🧮')) {
             set((s) => ({
@@ -270,7 +267,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 chatState: 'FUNNEL',
                 currentFunnelStep: 0,
                 isBotMessageReady: false,
-                funnelAnswers: {} // Reset answers if restarting? Maybe better to keep but usually safer to reset on fresh restart
+                funnelAnswers: {}
             }))
 
             reachGoal(
@@ -280,14 +277,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             )
 
             setTimeout(() => {
-                const step = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
-                    ? tenantConfig.funnelSteps[0]
-                    : FUNNEL_STEPS[0]
-                _addBotMessage(step.question)
+                _addBotMessage(funnelSteps[0].question)
                 set({ isBotMessageReady: true })
             }, 800)
             return
         }
+
+        set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
