@@ -415,11 +415,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             return
         }
 
-        if (chatState === 'SEGMENT_CHOICE') {
+        const { availableSegments } = get()
+        if (chatState === 'SEGMENT_CHOICE' || (chatState === 'FREE_CHAT' && availableSegments.includes(text))) {
             const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
             set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE', isBotMessageReady: false })
             setTimeout(() => {
-                _addBotMessage(`Отлично! Отправлю смету в ${text}.\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
+                _addBotMessage(`Отлично! Отправлю смету в сегменте «${text}».\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
             }, 600)
             return
         }

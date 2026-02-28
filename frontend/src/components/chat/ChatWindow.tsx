@@ -52,11 +52,13 @@ export default function ChatWindow() {
         chatState === 'WELCOME' ? welcomeButtons : currentStep?.options ?? []
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
-    const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
+    const showSegmentButtons = (chatState === 'SEGMENT_CHOICE' || (chatState === 'FREE_CHAT' && availableSegments.length > 0 && !funnelAnswers.selectedSegment)) && canShowButtons
+    const segmentButtonsWithAsk = [...availableSegments, '❓ Задать вопрос']
     const leadButtons = ['Telegram', 'MAX', '❓ Задать вопрос']
 
     const showTextInput = isHumanManaged || (!isTyping && (
         chatState === 'FREE_CHAT' ||
+        chatState === 'SEGMENT_CHOICE' || // NEW: allow typing during segment choice
         (canShowButtons && chatState === 'FUNNEL' && currentStep?.type === 'text-input') ||
         (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel) ||
         (chatState === 'WELCOME' && false) // keep welcome hidden until button pressed
@@ -159,7 +161,7 @@ export default function ChatWindow() {
                                 <QuickButtons buttons={leadButtons} onSelect={sendUserMessage} />
                             )}
                             {showSegmentButtons && (
-                                <QuickButtons buttons={availableSegments} onSelect={sendUserMessage} />
+                                <QuickButtons buttons={segmentButtonsWithAsk} onSelect={sendUserMessage} />
                             )}
                         </div>
                     </div>
