@@ -149,7 +149,7 @@ export async function runMigrations() {
     CREATE TABLE IF NOT EXISTS tenant_integrations (
       tenant_id UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
       routerai_api_key VARCHAR(255),
-      routerai_primary_model VARCHAR(50) DEFAULT 'openai/gpt-5.2',
+      routerai_primary_model VARCHAR(50) DEFAULT 'anthropic/claude-sonnet-4.6',
       routerai_fallback_model VARCHAR(50) DEFAULT 'anthropic/claude-sonnet-4.6',
       routerai_daily_token_limit INT DEFAULT 100000,
       telegram_bot_token VARCHAR(255),

@@ -16,9 +16,8 @@ import {
 
 const LLM_MODELS = [
     'anthropic/claude-sonnet-4.6',
-    'openai/gpt-4o',
-    'openai/gpt-4o-mini',
-    'google/gemini-1.5-flash',
+    'openai/gpt-5.2',
+    'deepseek/deepseek-v3.2',
 ];
 
 const MaskedInput = ({ value, field, showKeys, toggleKeyVisibility, onChange }: {

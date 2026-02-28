@@ -36,10 +36,11 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         }
 
         const apiKey = settings.routerai_api_key
-        let model = settings.routerai_primary_model || 'openai/gpt-4o'
+        let model = settings.routerai_primary_model || 'anthropic/claude-sonnet-4.6'
+        console.log(`[ChatService] Using primary model from DB: ${settings.routerai_primary_model} (Final model: ${model})`);
 
         // Auto-fix missing prefixes for common models
-        if (model === 'gpt-4o' || model === 'gpt-4o-mini') {
+        if (model === 'gpt-4o' || model === 'gpt-4o-mini' || model === 'gpt-5.2') {
             model = `openai/${model}`
         }
 
