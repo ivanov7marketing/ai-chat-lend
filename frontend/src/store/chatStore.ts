@@ -29,6 +29,7 @@ interface ChatStore {
     funnelAnswers: FunnelAnswers
     isTyping: boolean
     isBotMessageReady: boolean
+    isWaitingForAi: boolean
     isHumanManaged: boolean
     managerIsTyping: boolean
     availableSegments: string[]
@@ -77,6 +78,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     funnelAnswers: {},
     isTyping: false,
     isBotMessageReady: false,
+    isWaitingForAi: false,
     isHumanManaged: false,
     managerIsTyping: false,
     availableSegments: [],
@@ -146,7 +148,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         timestamp: Date.now(),
                     }
 
-                    set((s) => ({ messages: [...s.messages, msg], isTyping: false, managerIsTyping: false }))
+                    set((s) => ({ messages: [...s.messages, msg], isTyping: false, managerIsTyping: false, isWaitingForAi: false }))
 
                     if (hasTrigger) {
                         setTimeout(() => {
@@ -160,8 +162,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                         }, 1000)
                     } else if (get().chatState === 'FREE_CHAT' && get().availableSegments.length > 0 && !get().funnelAnswers.selectedSegment) {
                         // After AI answer in segment context, remind user to pick
+                        set({ isWaitingForAi: true })
                         setTimeout(() => {
                             get()._addBotMessage('Какую смету отправить? 👇')
+                            set({ isWaitingForAi: false })
                         }, 800)
                     }
                 } else if (data.type === 'typing') {
@@ -298,12 +302,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             return
         }
 
-        if (chatState === 'WELCOME') {
+        if ((chatState as string) === 'WELCOME') {
             set((s) => ({ messages: [...s.messages, userMsg], chatState: 'FREE_CHAT', isBotMessageReady: false }))
-            return
+            // Fall through to send to AI
+        } else {
+            set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
         }
 
-        set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
+        const isAiRequest = chatState === 'FREE_CHAT' || (chatState === 'WELCOME' && !text.startsWith('🧮') && text !== '❓ Задать вопрос')
+        const inSegmentConversation = chatState === 'FREE_CHAT' && availableSegments.length > 0 && !funnelAnswers.selectedSegment
 
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
@@ -311,8 +318,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 role: 'user',
                 content: text,
                 id: userMsg.id,
-                skipAI: chatState === 'FUNNEL' || chatState === 'SEGMENT_CHOICE' || chatState === 'LEAD_CAPTURE'
+                skipAI: !isAiRequest
             }))
+            if (isAiRequest && inSegmentConversation) {
+                set({ isWaitingForAi: true })
+            }
         }
 
         if (chatState === 'FUNNEL') {

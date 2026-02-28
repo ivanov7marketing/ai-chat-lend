@@ -22,6 +22,7 @@ export default function ChatWindow() {
         closeChat,
         tenantConfig,
         isHumanManaged,
+        isWaitingForAi,
     } = useChatStore()
 
     const [inputValue, setInputValue] = useState('')
@@ -52,7 +53,7 @@ export default function ChatWindow() {
         chatState === 'WELCOME' ? welcomeButtons : currentStep?.options ?? []
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
-    const showSegmentButtons = (chatState === 'SEGMENT_CHOICE' || (chatState === 'FREE_CHAT' && availableSegments.length > 0 && !funnelAnswers.selectedSegment)) && canShowButtons
+    const showSegmentButtons = (chatState === 'SEGMENT_CHOICE' || (chatState === 'FREE_CHAT' && availableSegments.length > 0 && !funnelAnswers.selectedSegment)) && canShowButtons && !isWaitingForAi
     const segmentButtonsWithAsk = [...availableSegments, '❓ Задать вопрос']
     const leadButtons = ['Telegram', 'MAX', '❓ Задать вопрос']
 
