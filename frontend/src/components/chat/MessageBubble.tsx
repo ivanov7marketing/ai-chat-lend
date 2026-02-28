@@ -8,33 +8,45 @@ interface Props {
     message: Message
 }
 
+// Linkify phone numbers in text for ReactMarkdown
+const linkifyPhones = (text: string) => {
+    if (!text) return text
+    // Regex for Russian phone numbers (+7, 7, 8)
+    const phoneRegex = /(\+?7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/g
+    return text.replace(phoneRegex, (match) => {
+        const clean = match.replace(/[^\d+]/g, '').replace(/^8/, '+7')
+        const fullNumber = clean.startsWith('+') ? clean : `+${clean}`
+        return `[${match}](tel:${fullNumber})`
+    })
+}
+
 // Custom component to handle phone numbers and other basic text formatting
 const MarkdownContent = ({ content }: { content: string }) => {
-    // Basic phone detector (pre-processing or components could be used)
-    // For now, let's use a simple approach: if we find a phone, we make it a link.
-    // However, react-markdown simplifies this a lot.
     return (
         <ReactMarkdown
             components={{
                 p: ({ children }) => <span className="block mb-2 last:mb-0 leading-relaxed">{children}</span>,
                 strong: ({ children }) => <strong className="font-bold text-black">{children}</strong>,
-                a: ({ href, children }) => (
-                    <a
-                        href={href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary-600 font-medium underline hover:text-primary-700 decoration-primary-300 underline-offset-4"
-                    >
-                        {children}
-                    </a>
-                ),
+                a: ({ href, children }) => {
+                    const isTel = href?.startsWith('tel:')
+                    return (
+                        <a
+                            href={href}
+                            target={isTel ? undefined : "_blank"}
+                            rel={isTel ? undefined : "noopener noreferrer"}
+                            className="text-primary-600 font-medium underline hover:text-primary-700 decoration-primary-300 underline-offset-4"
+                        >
+                            {children}
+                        </a>
+                    )
+                },
                 li: ({ children }) => <li className="mb-1">{children}</li>,
                 ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
                 ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
                 hr: () => <hr className="my-3 border-gray-100" />
             }}
         >
-            {content}
+            {linkifyPhones(content)}
         </ReactMarkdown>
     )
 }
