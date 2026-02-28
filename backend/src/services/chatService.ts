@@ -47,6 +47,41 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         const botName = settings.bot_name || 'Макс'
         const triggerWords: string[] = settings.trigger_words || ['дорого', 'не устраивает', 'менеджер']
 
+        // 1.5 Detect Phone Number (Lead Capture in Free Chat)
+        const phoneRegex = /^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$/
+        const looksLikePhone = phoneRegex.test(message.trim()) || (message.trim().length >= 10 && /^\d+$/.test(message.trim().replace(/[\s\-\(\)\+]/g, '')))
+
+        if (looksLikePhone) {
+            console.log(`[ChatService] Phone number detected: ${message}`);
+            try {
+                // Save lead
+                await pool.query(
+                    `INSERT INTO leads (session_id, tenant_id, contact_type, contact_value)
+                     VALUES ($1, $2, $3, $4)`,
+                    [sessionId, tenantId, 'phone_chat', message.trim()]
+                )
+
+                // Update session
+                const { updateSessionStatus, incrementTenantUsage } = await import('./sessionService')
+                await updateSessionStatus(sessionId, 'converted')
+                await incrementTenantUsage(tenantId, 'leads_count')
+
+                // Notify Telegram
+                const { sendTelegramNotification } = await import('./telegramService')
+                await sendTelegramNotification(
+                    `📱 <b>Новый контакт из свободного чата!</b>\n\n` +
+                    `<b>Телефон:</b> <code>${message.trim()}</code>\n` +
+                    `<b>Сессия:</b> <code>${sessionId}</code>`,
+                    tenantId
+                )
+
+                return 'Благодарю за проявленный интерес! Менеджер свяжется с вами в ближайшие 30 минут.'
+            } catch (err) {
+                console.error('[ChatService] Failed to save lead from phone detection:', err);
+                // Continue to LLM or fallback
+            }
+        }
+
         console.log(`[ChatService] Using model: ${model} for bot: ${botName}`);
 
         // 2. Check for trigger words (Escalation)
