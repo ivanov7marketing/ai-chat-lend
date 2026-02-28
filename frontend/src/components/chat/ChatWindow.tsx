@@ -61,7 +61,8 @@ export default function ChatWindow() {
     const showTextInput = (canShowButtons || isHumanManaged) && (
         (chatState === 'FUNNEL' && currentStep?.type === 'text-input' && !isTyping) ||
         (chatState === 'LEAD_CAPTURE' && !isTyping) ||
-        chatState === 'FREE_CHAT'
+        chatState === 'FREE_CHAT' ||
+        chatState === 'WELCOME'
     )
 
     const handleSend = () => {

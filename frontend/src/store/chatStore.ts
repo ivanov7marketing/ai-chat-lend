@@ -254,9 +254,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     _addBotMessage(funnelSteps[0].question)
                 }, 800)
             } else {
-                setTimeout(() => {
-                    _addBotMessage('Понял! Давайте сначала рассчитаем стоимость — это займёт 1 минуту.\n\nНажмите «🧮 Рассчитать стоимость ремонта» чтобы начать.')
-                }, 800)
+                // If it's a general question or other button, transition to FREE_CHAT 
+                // and let the backend AI respond via WebSocket.
+                set({ chatState: 'FREE_CHAT' })
             }
             return
         }
