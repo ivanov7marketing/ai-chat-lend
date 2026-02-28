@@ -4,6 +4,7 @@ import { createSession, saveMessage } from '../services/sessionService'
 import { pool } from '../db/client'
 import { handleFreeChat } from '../services/chatService'
 import { checkLimit } from '../services/limitsService'
+import crypto from 'crypto'
 
 export async function wsRoutes(fastify: FastifyInstance) {
     // ============================================================
@@ -169,6 +170,34 @@ export async function wsRoutes(fastify: FastifyInstance) {
                             content: data.content,
                             id: data.id
                         }, socket)
+
+                        // --- Trigger AI Response (Free Chat) ---
+                        // Only if tenantId is resolved
+                        if (tenantId) {
+                            // Show typing status
+                            broadcastToRoom(sessionId, { type: 'typing', active: true })
+
+                            handleFreeChat(tenantId, sessionId, data.content).then(async (aiReply) => {
+                                if (aiReply) {
+                                    const botMsgId = crypto.randomUUID()
+                                    // Save bot message to DB
+                                    await saveMessage(sessionId!, 'bot', aiReply)
+
+                                    // Broadcast bot message to the room (user and admins)
+                                    broadcastToRoom(sessionId!, {
+                                        type: 'message',
+                                        role: 'bot',
+                                        content: aiReply,
+                                        id: botMsgId
+                                    })
+                                }
+                                // Hide typing status
+                                broadcastToRoom(sessionId!, { type: 'typing', active: false })
+                            }).catch(err => {
+                                console.error('AI response error:', err)
+                                broadcastToRoom(sessionId!, { type: 'typing', active: false })
+                            })
+                        }
                     }
                 } else if (data.type === 'session_close' && sessionId) {
                     await pool.query(`UPDATE sessions SET status = 'closed' WHERE id = $1`, [sessionId])

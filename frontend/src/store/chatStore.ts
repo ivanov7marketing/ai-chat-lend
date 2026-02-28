@@ -131,16 +131,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                     set({ sessionId: data.sessionId })
                 } else if (data.type === 'takeover_active') {
                     set({ isHumanManaged: true })
-                } else if (data.type === 'message' && data.role === 'manager') {
+                } else if (data.type === 'message' && (data.role === 'manager' || data.role === 'bot')) {
                     const msg: Message = {
                         id: data.id || Date.now().toString(),
-                        role: 'manager',
+                        role: data.role,
                         text: data.content,
                         timestamp: Date.now(),
                     }
-                    set((s) => ({ messages: [...s.messages, msg], isTyping: false }))
+                    set((s) => ({ messages: [...s.messages, msg], isTyping: false, managerIsTyping: false }))
                 } else if (data.type === 'typing') {
-                    set({ managerIsTyping: data.active })
+                    set(s => ({
+                        isTyping: !s.isHumanManaged && data.active,
+                        managerIsTyping: s.isHumanManaged && data.active
+                    }))
                 }
             } catch (e) {
                 console.error('WebSocket receive error:', e)
@@ -399,9 +402,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
 
         if (chatState === 'FREE_CHAT') {
-            setTimeout(() => _addBotMessage(
-                'Пока я работаю в демо-режиме, но скоро смогу отвечать на любые ваши вопросы по ремонту!'
-            ), 1000)
+            // No local echo/demo response needed anymore.
+            // The message is already sent via socket.send above.
+            // The bot's response will come back via the WebSocket's onmessage.
             return
         }
     },
