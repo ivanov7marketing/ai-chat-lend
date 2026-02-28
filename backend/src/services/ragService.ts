@@ -44,7 +44,7 @@ async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
         },
         body: JSON.stringify({
             input: text,
-            model: 'text-embedding-3-small' // Or any suitable model supported by RouterAI
+            model: 'openai/text-embedding-3-small' // Correct model ID for RouterAI
         })
     })
 
