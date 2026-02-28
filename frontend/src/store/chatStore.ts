@@ -244,12 +244,29 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ? tenantConfig.funnelSteps
             : FUNNEL_STEPS
 
-        // Logic to determine if we should skip AI response on the backend
-        let skipAI = false
-        if (chatState === 'FUNNEL' || chatState === 'SEGMENT_CHOICE' || chatState === 'LEAD_CAPTURE') {
-            skipAI = true
-        } else if (chatState === 'WELCOME' && text.startsWith('🧮')) {
-            skipAI = true
+        if (text.startsWith('🧮')) {
+            set((s) => ({
+                messages: [...s.messages, userMsg],
+                chatState: 'FUNNEL',
+                currentFunnelStep: 0,
+                isBotMessageReady: false,
+                funnelAnswers: {} // Reset answers if restarting? Maybe better to keep but usually safer to reset on fresh restart
+            }))
+
+            reachGoal(
+                tenantConfig?.integrations?.yandexMetrika?.counterId,
+                'estimate_started',
+                tenantConfig?.integrations?.yandexMetrika?.events
+            )
+
+            setTimeout(() => {
+                const step = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
+                    ? tenantConfig.funnelSteps[0]
+                    : FUNNEL_STEPS[0]
+                _addBotMessage(step.question)
+                set({ isBotMessageReady: true })
+            }, 800)
+            return
         }
 
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -258,26 +275,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 role: 'user',
                 content: text,
                 id: userMsg.id,
-                skipAI
+                skipAI: chatState === 'FUNNEL' || chatState === 'SEGMENT_CHOICE' || chatState === 'LEAD_CAPTURE'
             }))
         }
 
         if (chatState === 'WELCOME') {
-            if (text.startsWith('🧮')) {
-                set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
-                reachGoal(
-                    tenantConfig?.integrations?.yandexMetrika?.counterId,
-                    'estimate_started',
-                    tenantConfig?.integrations?.yandexMetrika?.events
-                )
-                setTimeout(() => {
-                    _addBotMessage(funnelSteps[0].question)
-                }, 800)
-            } else {
-                // If it's a general question or other button, transition to FREE_CHAT 
-                // and let the backend AI respond via WebSocket.
-                set({ chatState: 'FREE_CHAT' })
-            }
+            set({ chatState: 'FREE_CHAT' })
             return
         }
 

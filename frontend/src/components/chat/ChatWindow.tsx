@@ -46,10 +46,11 @@ export default function ChatWindow() {
 
     const showQuickButtons =
         (chatState === 'WELCOME' && canShowButtons) ||
+        (chatState === 'FREE_CHAT' && canShowButtons) ||
         (chatState === 'FUNNEL' && currentStep?.type === 'buttons' && canShowButtons)
 
     const currentButtons =
-        chatState === 'WELCOME' ? welcomeButtons : currentStep?.options ?? []
+        (chatState === 'WELCOME' || chatState === 'FREE_CHAT') ? welcomeButtons : currentStep?.options ?? []
 
     const showLeadButtons = chatState === 'LEAD_CAPTURE' && !funnelAnswers.contactChannel && canShowButtons
     const showSegmentButtons = chatState === 'SEGMENT_CHOICE' && canShowButtons
