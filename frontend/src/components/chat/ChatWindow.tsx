@@ -131,21 +131,30 @@ export default function ChatWindow() {
                     visible={chatState === 'FUNNEL'}
                 />
 
-                {/* Messages */}
+                {/* Messages Container with Background */}
                 <div
                     className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 scroll-smooth relative"
                     style={{
-                        backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)), url(/chat-bg.webp)',
+                        backgroundImage: 'url(/chat-bg.webp)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        backgroundRepeat: 'no-repeat'
+                        backgroundAttachment: 'local'
                     }}
                 >
-                    {messages.map((msg) => (
-                        <MessageBubble key={msg.id} message={msg} />
-                    ))}
-                    {isTyping && <TypingIndicator />}
-                    <div ref={messagesEndRef} />
+                    {/* Semi-transparent overlay to keep text readable but background visible */}
+                    <div
+                        className="absolute inset-0 bg-white/50 pointer-events-none"
+                        style={{ zIndex: 0 }}
+                    />
+
+                    {/* Messages layer */}
+                    <div className="relative z-10 flex flex-col gap-4">
+                        {messages.map((msg) => (
+                            <MessageBubble key={msg.id} message={msg} />
+                        ))}
+                        {isTyping && <TypingIndicator />}
+                        <div ref={messagesEndRef} />
+                    </div>
                 </div>
 
                 {/* Quick buttons */}
