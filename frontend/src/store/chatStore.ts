@@ -157,7 +157,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
                             set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
                             _addBotMessage(funnelSteps[0].question)
-                        }, 1500)
+                        }, 1000)
                     }
                 } else if (data.type === 'typing') {
                     set(s => ({
