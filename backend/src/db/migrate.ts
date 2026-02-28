@@ -203,6 +203,7 @@ export async function runMigrations() {
       messages_count INT DEFAULT 0,
       leads_count INT DEFAULT 0,
       tokens_used BIGINT DEFAULT 0,
+      tokens_cost NUMERIC(15, 6) DEFAULT 0,
       pdf_generated INT DEFAULT 0,
       storage_bytes BIGINT DEFAULT 0,
       UNIQUE(tenant_id, month)
@@ -303,6 +304,13 @@ export async function runMigrations() {
         WHERE table_name = 'tenant_bot_settings' AND column_name = 'is_white_label'
       ) THEN
         ALTER TABLE tenant_bot_settings ADD COLUMN is_white_label BOOLEAN DEFAULT FALSE;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'tenant_usage' AND column_name = 'tokens_cost'
+      ) THEN
+        ALTER TABLE tenant_usage ADD COLUMN tokens_cost NUMERIC(15, 6) DEFAULT 0;
       END IF;
     END $$;
 

@@ -122,15 +122,23 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         const data = await response.json() as any;
         console.log(`[ChatService] LLM response received`);
 
-        // 8. Increment Tokens Used
-        if (data.usage && data.usage.total_tokens) {
+        // 8. Increment Tokens Used & Cost
+        if (data.usage && (data.usage.total_tokens || data.usage.cost)) {
             try {
                 const { incrementTenantUsage } = await import('./sessionService')
-                await incrementTenantUsage(tenantId, 'tokens_used', data.usage.total_tokens)
-                console.log(`[ChatService] Incremented ${data.usage.total_tokens} tokens`);
+                if (data.usage.total_tokens) {
+                    await incrementTenantUsage(tenantId, 'tokens_used', data.usage.total_tokens)
+                    console.log(`[ChatService] Incremented ${data.usage.total_tokens} tokens`);
+                }
+
+                // OpenRouter/RouterAI specific: cost of the request
+                const cost = data.usage.cost || data.cost;
+                if (cost) {
+                    await incrementTenantUsage(tenantId, 'tokens_cost', cost)
+                    console.log(`[ChatService] Incremented cost: ${cost}`);
+                }
             } catch (usageErr) {
                 console.error('[ChatService] Failed to increment usage:', usageErr);
-                // Continue anyway
             }
         }
 

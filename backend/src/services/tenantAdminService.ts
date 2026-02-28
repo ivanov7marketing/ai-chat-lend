@@ -230,6 +230,14 @@ export async function deleteCannedResponse(tenantId: string, id: string) {
 // ============================================================
 
 export async function getIntegrations(tenantId: string) {
+    // Fetch current month usage for LLM
+    const usageRes = await pool.query(
+        `SELECT tokens_used, tokens_cost FROM tenant_usage 
+         WHERE tenant_id = $1 AND month = date_trunc('month', NOW())`,
+        [tenantId]
+    )
+    const usage = usageRes.rows[0] || { tokens_used: 0, tokens_cost: 0 }
+
     const res = await pool.query(
         `SELECT * FROM tenant_integrations WHERE tenant_id = $1`,
         [tenantId]
@@ -243,8 +251,8 @@ export async function getIntegrations(tenantId: string) {
             primaryModel: r.routerai_primary_model,
             fallbackModel: r.routerai_fallback_model,
             dailyTokenLimit: r.routerai_daily_token_limit,
-            currentMonthUsage: 0,
-            currentMonthCost: 0,
+            currentMonthUsage: Number(usage.tokens_used),
+            currentMonthCost: Number(usage.tokens_cost),
         },
         telegram: {
             botToken: r.telegram_bot_token ? '••••' + '••••'.repeat(5) : '',

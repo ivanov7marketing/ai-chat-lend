@@ -2,7 +2,7 @@ import { pool } from '../db/client'
 
 export async function incrementTenantUsage(
     tenantId: string,
-    metric: 'sessions_count' | 'messages_count' | 'leads_count' | 'tokens_used',
+    metric: 'sessions_count' | 'messages_count' | 'leads_count' | 'tokens_used' | 'tokens_cost',
     value: number = 1
 ) {
     if (!tenantId) return
