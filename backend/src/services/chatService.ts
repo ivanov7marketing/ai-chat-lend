@@ -32,7 +32,7 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         }
 
         const apiKey = settings.routerai_api_key
-        const model = settings.routerai_primary_model || 'gpt-4o'
+        const model = settings.routerai_primary_model || 'openai/gpt-5.2'
         const botName = settings.bot_name || 'Макс'
         const triggerWords: string[] = settings.trigger_words || ['дорого', 'не устраивает', 'менеджер']
 
