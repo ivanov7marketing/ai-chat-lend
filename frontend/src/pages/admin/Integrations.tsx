@@ -23,6 +23,7 @@ const LLM_MODELS = [
 export default function Integrations() {
     const [data, setData] = useState<IntegrationSettings | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState<string | null>(null);
     const [testing, setTesting] = useState<string | null>(null);
     const [testResult, setTestResult] = useState<{ service: string; success: boolean; message: string } | null>(null);
@@ -31,6 +32,10 @@ export default function Integrations() {
     useEffect(() => {
         getIntegrations()
             .then(setData)
+            .catch(err => {
+                console.error('Failed to fetch integrations:', err);
+                setError(err.message);
+            })
             .finally(() => setLoading(false));
     }, []);
 
@@ -72,7 +77,38 @@ export default function Integrations() {
         );
     }
 
-    if (!data) return null;
+    if (error || !data) {
+        return (
+            <div className="p-8 max-w-4xl mx-auto">
+                <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Ошибка загрузки</h2>
+                    <p className="text-gray-500 mb-6">
+                        {error?.includes('401')
+                            ? 'Ваша сессия истекла. Пожалуйста, войдите в систему заново.'
+                            : (error || 'Не удалось загрузить данные интеграций.')}
+                    </p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition"
+                    >
+                        Попробовать снова
+                    </button>
+                    {error?.includes('401') && (
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem('auth_token');
+                                window.location.href = '/login';
+                            }}
+                            className="ml-4 px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition"
+                        >
+                            К логину
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     const MaskedInput = ({ value, field, onChange }: { value: string; field: string; onChange: (v: string) => void }) => (
         <div className="relative">
