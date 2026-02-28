@@ -136,9 +136,10 @@ export default function ChatWindow() {
                     className="flex-1 overflow-y-auto relative flex flex-col"
                     style={{
                         backgroundImage: 'url(/chat-bg.webp)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundAttachment: 'fixed',
+                        backgroundSize: '100% auto',
+                        backgroundPosition: 'center bottom',
+                        backgroundRepeat: 'repeat',
+                        backgroundAttachment: 'scroll',
                         backgroundColor: '#f8fafc'
                     }}
                 >
