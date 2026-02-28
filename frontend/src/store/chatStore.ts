@@ -91,7 +91,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     tenantConfig: null,
     socket: null,
 
-    submitLead: async (contactType, contactValue) => {
+    submitLead: async (contactType: string, contactValue: string) => {
         const { sessionId, funnelAnswers, estimateMin, estimateMax } = get()
         try {
             await submitLeadApi({
@@ -222,6 +222,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             messages: [],
             funnelAnswers: {},
             currentFunnelStep: 0,
+            availableSegments: [],
+            estimateMin: 0,
+            estimateMax: 0,
             sessionId: null, // Will be set by WebSocket
             isHumanManaged: false,
         })
@@ -238,7 +241,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             setTimeout(() => get().sendUserMessage(initialQuestion), 1200)
         }
     },
-
     closeChat: () => {
         const { socket } = get()
         if (socket) {
@@ -247,7 +249,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             }
             socket.close()
         }
-        set({ isOpen: false, socket: null })
+        set({
+            isOpen: false,
+            socket: null,
+            availableSegments: [],
+            funnelAnswers: {},
+            currentFunnelStep: 0,
+            estimateMin: 0,
+            estimateMax: 0,
+            isHumanManaged: false
+        })
     },
 
     sendUserMessage: async (text: string) => {
