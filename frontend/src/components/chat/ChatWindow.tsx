@@ -59,7 +59,6 @@ export default function ChatWindow() {
 
     const showTextInput = isHumanManaged || (!isTyping && (
         chatState === 'FREE_CHAT' ||
-        chatState === 'SEGMENT_CHOICE' || // NEW: allow typing during segment choice
         (canShowButtons && chatState === 'FUNNEL' && currentStep?.type === 'text-input') ||
         (chatState === 'LEAD_CAPTURE' && !!funnelAnswers.contactChannel) ||
         (chatState === 'WELCOME' && false) // keep welcome hidden until button pressed
