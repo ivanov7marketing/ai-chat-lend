@@ -233,12 +233,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             ? tenantConfig.funnelSteps
             : FUNNEL_STEPS
 
+        // Logic to determine if we should skip AI response on the backend
+        let skipAI = false
+        if (chatState === 'FUNNEL' || chatState === 'SEGMENT_CHOICE' || chatState === 'LEAD_CAPTURE') {
+            skipAI = true
+        } else if (chatState === 'WELCOME' && text.startsWith('🧮')) {
+            skipAI = true
+        }
+
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
                 type: 'message',
                 role: 'user',
                 content: text,
-                id: userMsg.id
+                id: userMsg.id,
+                skipAI
             }))
         }
 

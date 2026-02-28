@@ -172,8 +172,8 @@ export async function wsRoutes(fastify: FastifyInstance) {
                         }, socket)
 
                         // --- Trigger AI Response (Free Chat) ---
-                        // Only if tenantId is resolved
-                        if (tenantId) {
+                        // Only if tenantId is resolved AND skipAI is not true
+                        if (tenantId && !data.skipAI) {
                             // Show typing status
                             broadcastToRoom(sessionId, { type: 'typing', active: true })
 
