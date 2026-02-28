@@ -131,42 +131,44 @@ export default function ChatWindow() {
                     visible={chatState === 'FUNNEL'}
                 />
 
-                {/* Messages Container with Background */}
+                {/* Scrollable Main Area with Background Pattern */}
                 <div
-                    className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 scroll-smooth relative"
+                    className="flex-1 overflow-y-auto relative flex flex-col"
                     style={{
                         backgroundImage: 'url(/chat-bg.webp)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        backgroundAttachment: 'local'
+                        backgroundRepeat: 'repeat',
+                        backgroundSize: '350px',
+                        backgroundAttachment: 'local',
+                        backgroundColor: '#f8fafc'
                     }}
                 >
-                    {/* Semi-transparent overlay to keep text readable but background visible */}
-                    <div
-                        className="absolute inset-0 bg-white/50 pointer-events-none"
-                        style={{ zIndex: 0 }}
-                    />
+                    {/* Overlay for readability */}
+                    <div className="absolute inset-0 bg-white/80 pointer-events-none z-0" />
 
-                    {/* Messages layer */}
-                    <div className="relative z-10 flex flex-col gap-4">
-                        {messages.map((msg) => (
-                            <MessageBubble key={msg.id} message={msg} />
-                        ))}
-                        {isTyping && <TypingIndicator />}
-                        <div ref={messagesEndRef} />
+                    <div className="relative z-10 flex-1 flex flex-col">
+                        {/* Messages */}
+                        <div className="px-4 py-4 flex flex-col gap-4">
+                            {messages.map((msg) => (
+                                <MessageBubble key={msg.id} message={msg} />
+                            ))}
+                            {isTyping && <TypingIndicator />}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Interactive Elements pushed to the bottom of the scrollable area */}
+                        <div className="mt-auto pb-4">
+                            {showQuickButtons && (
+                                <QuickButtons buttons={currentButtons} onSelect={sendUserMessage} />
+                            )}
+                            {showLeadButtons && (
+                                <QuickButtons buttons={leadButtons} onSelect={sendUserMessage} />
+                            )}
+                            {showSegmentButtons && (
+                                <QuickButtons buttons={availableSegments} onSelect={sendUserMessage} />
+                            )}
+                        </div>
                     </div>
                 </div>
-
-                {/* Quick buttons */}
-                {showQuickButtons && (
-                    <QuickButtons buttons={currentButtons} onSelect={sendUserMessage} />
-                )}
-                {showLeadButtons && (
-                    <QuickButtons buttons={leadButtons} onSelect={sendUserMessage} />
-                )}
-                {showSegmentButtons && (
-                    <QuickButtons buttons={availableSegments} onSelect={sendUserMessage} />
-                )}
 
                 {/* Input */}
                 <div className="border-t border-gray-100 px-4 py-3 flex-shrink-0">
