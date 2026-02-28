@@ -158,6 +158,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                             set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
                             _addBotMessage(funnelSteps[0].question)
                         }, 1000)
+                    } else if (get().chatState === 'FREE_CHAT' && get().availableSegments.length > 0 && !get().funnelAnswers.selectedSegment) {
+                        // After AI answer in segment context, remind user to pick
+                        setTimeout(() => {
+                            get()._addBotMessage('Какую смету отправить? 👇')
+                        }, 800)
                     }
                 } else if (data.type === 'typing') {
                     set(s => ({
@@ -283,6 +288,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             return
         }
 
+        const { availableSegments } = get()
+        if (availableSegments.includes(text) && (chatState === 'SEGMENT_CHOICE' || chatState === 'FREE_CHAT')) {
+            const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
+            set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE', isBotMessageReady: false })
+            setTimeout(() => {
+                _addBotMessage(`Отлично! Отправлю смету в сегменте «${text}».\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
+            }, 600)
+            return
+        }
+
+        if (chatState === 'WELCOME') {
+            set((s) => ({ messages: [...s.messages, userMsg], chatState: 'FREE_CHAT', isBotMessageReady: false }))
+            return
+        }
+
         set((s) => ({ messages: [...s.messages, userMsg], isBotMessageReady: false }))
 
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -293,11 +313,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 id: userMsg.id,
                 skipAI: chatState === 'FUNNEL' || chatState === 'SEGMENT_CHOICE' || chatState === 'LEAD_CAPTURE'
             }))
-        }
-
-        if (chatState === 'WELCOME') {
-            set({ chatState: 'FREE_CHAT' })
-            return
         }
 
         if (chatState === 'FUNNEL') {
@@ -415,16 +430,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
             return
         }
 
-        const { availableSegments } = get()
-        if (chatState === 'SEGMENT_CHOICE' || (chatState === 'FREE_CHAT' && availableSegments.includes(text))) {
-            const updatedAnswers = { ...funnelAnswers, selectedSegment: text }
-            set({ funnelAnswers: updatedAnswers, chatState: 'LEAD_CAPTURE', isBotMessageReady: false })
-            setTimeout(() => {
-                _addBotMessage(`Отлично! Отправлю смету в сегменте «${text}».\n\nОставьте ваш номер телефона — менеджер свяжется и пришлёт смету 👇`)
-            }, 600)
-            return
-        }
-
+        // Lead conversion logic
         if (chatState === 'LEAD_CAPTURE') {
             if (!funnelAnswers.contactChannel) {
                 const updatedAnswers = { ...funnelAnswers, contactChannel: text }
