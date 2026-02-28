@@ -395,7 +395,21 @@ export async function testIntegration(tenantId: string, service: string) {
         if (!row.routerai_api_key) {
             return { success: false, message: 'API-ключ RouterAI не указан' }
         }
-        return { success: true, message: 'API-ключ настроен (проверка подключения в разработке)' }
+        const url = process.env.ROUTERAI_BASE_URL || 'https://routerai.ru/api/v1'
+        try {
+            const resp = await fetch(`${url}/models`, {
+                headers: {
+                    'Authorization': `Bearer ${row.routerai_api_key}`
+                }
+            })
+            if (resp.ok) {
+                return { success: true, message: 'Подключение к RouterAI успешно установлено!' }
+            }
+            const errText = await resp.text()
+            return { success: false, message: `Ошибка RouterAI (${resp.status}): ${errText.substring(0, 100)}` }
+        } catch (err: any) {
+            return { success: false, message: `Ошибка подключения: ${err.message}` }
+        }
     }
 
     if (service === 'amoCRM') {

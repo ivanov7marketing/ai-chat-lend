@@ -35,7 +35,7 @@ async function getRouterApiKey(tenantId: string): Promise<string> {
  */
 async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
     // Assuming RouterAI provides an OpenAI-compatible /v1/embeddings endpoint
-    const url = process.env.ROUTERAI_BASE_URL || 'https://api.routerai.ru/v1'
+    const url = process.env.ROUTERAI_BASE_URL || 'https://routerai.ru/api/v1'
     const response = await fetch(`${url}/embeddings`, {
         method: 'POST',
         headers: {

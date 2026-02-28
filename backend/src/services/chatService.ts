@@ -81,7 +81,7 @@ export async function handleFreeChat(tenantId: string, sessionId: string, messag
         }
 
         // 7. Call RouterAI Chat Completions
-        const url = process.env.ROUTERAI_BASE_URL || 'https://api.routerai.ru/v1'
+        const url = process.env.ROUTERAI_BASE_URL || 'https://routerai.ru/api/v1'
         const response = await fetch(`${url}/chat/completions`, {
             method: 'POST',
             headers: {
