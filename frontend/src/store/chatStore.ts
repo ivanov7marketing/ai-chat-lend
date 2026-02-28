@@ -132,13 +132,33 @@ export const useChatStore = create<ChatStore>((set, get) => ({
                 } else if (data.type === 'takeover_active') {
                     set({ isHumanManaged: true })
                 } else if (data.type === 'message' && (data.role === 'manager' || data.role === 'bot')) {
+                    let cleanedText = data.content as string
+                    const hasTrigger = cleanedText.includes('[TRIGGER_FUNNEL]')
+
+                    if (hasTrigger) {
+                        cleanedText = cleanedText.replace('[TRIGGER_FUNNEL]', '').trim()
+                    }
+
                     const msg: Message = {
                         id: data.id || Date.now().toString(),
                         role: data.role,
-                        text: data.content,
+                        text: cleanedText,
                         timestamp: Date.now(),
                     }
+
                     set((s) => ({ messages: [...s.messages, msg], isTyping: false, managerIsTyping: false }))
+
+                    if (hasTrigger) {
+                        setTimeout(() => {
+                            const { tenantConfig, _addBotMessage } = get()
+                            const funnelSteps = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
+                                ? tenantConfig.funnelSteps
+                                : FUNNEL_STEPS
+
+                            set({ chatState: 'FUNNEL', currentFunnelStep: 0, isBotMessageReady: false })
+                            _addBotMessage(funnelSteps[0].question)
+                        }, 1500)
+                    }
                 } else if (data.type === 'typing') {
                     set(s => ({
                         isTyping: !s.isHumanManaged && data.active,
