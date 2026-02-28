@@ -1,4 +1,5 @@
 import React from 'react';
+import Header from '../components/Header';
 import HeroBlock from '../components/HeroBlock';
 import QuestionCard from '../components/QuestionCard';
 import { AnimatePresence } from 'framer-motion'
@@ -17,7 +18,8 @@ const EXAMPLE_QUESTIONS = [
 const LandingPage: React.FC = () => {
     const { openChat, isOpen } = useChatStore()
     return (
-        <div className="bg-page flex flex-col min-h-screen">
+        <div className="bg-page flex flex-col min-h-screen font-sans">
+            <Header />
             <HeroBlock onStart={() => openChat()} />
 
             <section className="flex-1">

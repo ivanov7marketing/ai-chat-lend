@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useChatStore } from '../../store/chatStore'
 import { TenantProvider, useTenant } from '../../contexts/TenantContext'
 import { initMetrika } from '../../services/metrika'
+import Header from '../../components/Header'
 import HeroBlock from '../../components/HeroBlock'
 import QuestionCard from '../../components/QuestionCard'
 import ChatWindow from '../../components/chat/ChatWindow'
@@ -55,6 +56,7 @@ function TenantLandingContent() {
 
     return (
         <div className="bg-page flex flex-col min-h-screen" style={brandStyle}>
+            <Header />
             <HeroBlock
                 onStart={() => openChat()}
                 title={tenant.branding.pageTitle || undefined}
