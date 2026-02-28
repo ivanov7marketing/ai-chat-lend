@@ -30,6 +30,7 @@ interface ChatStore {
     isTyping: boolean
     isBotMessageReady: boolean
     isWaitingForAi: boolean
+    isEnteringQuestion: boolean
     isHumanManaged: boolean
     managerIsTyping: boolean
     availableSegments: string[]
@@ -79,6 +80,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     isTyping: false,
     isBotMessageReady: false,
     isWaitingForAi: false,
+    isEnteringQuestion: false,
     isHumanManaged: false,
     managerIsTyping: false,
     availableSegments: [],
@@ -262,12 +264,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         }
 
         if (text === '❓ Задать вопрос') {
-            set((s) => ({ messages: [...s.messages, userMsg], chatState: 'FREE_CHAT', isBotMessageReady: false }))
+            set((s) => ({
+                messages: [...s.messages, userMsg],
+                chatState: 'FREE_CHAT',
+                isBotMessageReady: false,
+                isEnteringQuestion: true // User is now prompted, hide segments
+            }))
             setTimeout(() => {
                 _addBotMessage('Напишите свой вопрос 👇')
                 set({ isBotMessageReady: true })
             }, 600)
             return
+        }
+
+        // Reset the flag if any other message/button is sent
+        if (get().isEnteringQuestion) {
+            set({ isEnteringQuestion: false })
         }
 
         if (text.startsWith('🧮')) {
