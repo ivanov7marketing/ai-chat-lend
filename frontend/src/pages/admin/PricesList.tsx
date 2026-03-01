@@ -3,7 +3,7 @@ import { getPrices, updatePrices, addWorkType } from '../../services/adminApi';
 import type { PriceRecord } from '../../types/admin';
 import { Save, Plus, X, Filter } from 'lucide-react';
 
-const CATEGORIES = ['Все', 'Стены', 'Пол', 'Потолок', 'Электрика', 'Сантехника', 'Общее'];
+const CATEGORIES = ['Все', 'Подготовительные', 'Демонтаж', 'Черновая сантехника', 'Черновая электрика', 'Черновые отделочные', 'Чистовые отделочные', 'Чистовая сантехника', 'Чистовая электрика', 'Прочие', 'Накладные расходы'];
 const SEGMENTS = ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'];
 
 export default function PricesList() {
@@ -12,7 +12,7 @@ export default function PricesList() {
     const [saving, setSaving] = useState(false);
     const [filterCategory, setFilterCategory] = useState('Все');
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Стены' });
+    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Подготовительные' });
     const [newPrices, setNewPrices] = useState<Record<string, { min: string; max: string }>>(
         Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }]))
     );
@@ -75,7 +75,7 @@ export default function PricesList() {
         });
 
         setShowAddModal(false);
-        setNewWork({ name: '', unit: 'м²', category: 'Стены' });
+        setNewWork({ name: '', unit: 'м²', category: 'Подготовительные' });
         setNewPrices(Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }])));
         await fetchPrices();
     };
@@ -133,8 +133,8 @@ export default function PricesList() {
                             key={cat}
                             onClick={() => setFilterCategory(cat)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${filterCategory === cat
-                                    ? 'bg-primary-500 text-white shadow-sm'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-primary-500 text-white shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                 }`}
                         >
                             {cat}
