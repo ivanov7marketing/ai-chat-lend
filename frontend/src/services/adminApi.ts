@@ -28,13 +28,20 @@ function getAdminBase(slug?: string): string {
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     const token = getToken()
+    const headers = new Headers(options?.headers)
+
+    if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`)
+    }
+
+    // Only set Content-Type if we have a body and it's not already set
+    if (options?.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+
     const res = await fetch(`${API_BASE}${url}`, {
-        headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options?.headers,
-        },
         ...options,
+        headers,
     });
     if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown error');
