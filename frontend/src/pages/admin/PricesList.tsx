@@ -149,12 +149,9 @@ export default function PricesList() {
                     <table className="w-full text-sm text-left">
                         <thead>
                             <tr className="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                <th className="px-4 py-3">Категория</th>
-                                <th className="px-4 py-3">Вид работ</th>
-                                <th className="px-4 py-3">Ед. изм.</th>
-                                <th className="px-4 py-3">Сегмент</th>
-                                <th className="px-4 py-3">Цена от</th>
-                                <th className="px-4 py-3">Цена до</th>
+                                <th className="px-4 py-3">Наименование работ</th>
+                                <th className="px-4 py-3 w-32">Ед. изм.</th>
+                                <th className="px-4 py-3 w-36">Цена</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -165,40 +162,14 @@ export default function PricesList() {
                                         key={`${p.work_type_id}-${p.segment || index}`}
                                         className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
                                     >
-                                        <td className="px-4 py-3.5">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                                {p.category || '—'}
-                                            </span>
-                                        </td>
                                         <td className="px-4 py-3.5 font-medium text-gray-900">{p.name}</td>
                                         <td className="px-4 py-3.5 text-gray-500">{p.unit || '—'}</td>
-                                        <td className="px-4 py-3.5">
-                                            <select
-                                                value={p.segment || ''}
-                                                onChange={(e) => handleInputChange(realIndex, 'segment', e.target.value)}
-                                                className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
-                                            >
-                                                <option value="">—</option>
-                                                {SEGMENTS.map((s) => (
-                                                    <option key={s} value={s}>{s}</option>
-                                                ))}
-                                            </select>
-                                        </td>
                                         <td className="px-4 py-3.5">
                                             <input
                                                 type="number"
                                                 value={p.price_min || ''}
                                                 onChange={(e) => handleInputChange(realIndex, 'price_min', e.target.value)}
-                                                className="w-24 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
-                                                placeholder="0"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-3.5">
-                                            <input
-                                                type="number"
-                                                value={p.price_max || ''}
-                                                onChange={(e) => handleInputChange(realIndex, 'price_max', e.target.value)}
-                                                className="w-24 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                className="w-28 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
                                                 placeholder="0"
                                             />
                                         </td>
@@ -207,7 +178,7 @@ export default function PricesList() {
                             })}
                             {filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
+                                    <td colSpan={3} className="px-4 py-12 text-center text-gray-400">
                                         {filterCategory === 'Все'
                                             ? 'Нет видов работ. Добавьте первый.'
                                             : `Нет работ в категории «${filterCategory}».`}
@@ -273,29 +244,14 @@ export default function PricesList() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Цены по сегментам</label>
-                                <div className="space-y-2">
-                                    {SEGMENTS.map((seg) => (
-                                        <div key={seg} className="flex items-center gap-3">
-                                            <span className="w-24 text-sm text-gray-600">{seg}</span>
-                                            <input
-                                                type="number"
-                                                value={newPrices[seg].min}
-                                                onChange={(e) => setNewPrices({ ...newPrices, [seg]: { ...newPrices[seg], min: e.target.value } })}
-                                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
-                                                placeholder="от"
-                                            />
-                                            <span className="text-gray-400">—</span>
-                                            <input
-                                                type="number"
-                                                value={newPrices[seg].max}
-                                                onChange={(e) => setNewPrices({ ...newPrices, [seg]: { ...newPrices[seg], max: e.target.value } })}
-                                                className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
-                                                placeholder="до"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Цена</label>
+                                <input
+                                    type="number"
+                                    value={newPrices['Стандарт']?.min || ''}
+                                    onChange={(e) => setNewPrices({ ...newPrices, 'Стандарт': { min: e.target.value, max: e.target.value } })}
+                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
+                                    placeholder="0"
+                                />
                             </div>
                         </div>
 
