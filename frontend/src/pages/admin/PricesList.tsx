@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getPrices, updatePrices, addWorkType } from '../../services/adminApi';
 import type { PriceRecord } from '../../types/admin';
-import { Save, Plus, X, Filter } from 'lucide-react';
+import { Save, Plus, X, Filter, Trash2 } from 'lucide-react';
 
 const CATEGORIES = ['Все', 'Подготовительные работы', 'Демонтажные работы', 'Черновая сантехника', 'Черновая электрика', 'Черновые отделочные', 'Чистовые отделочные', 'Чистовая сантехника', 'Чистовая электрика', 'Прочие', 'Накладные расходы'];
 const SEGMENTS = ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'];
@@ -52,11 +52,17 @@ export default function PricesList() {
 
     const handleInputChange = (
         index: number,
-        field: 'price_min' | 'price_max' | 'segment',
+        field: 'price_min' | 'price_max' | 'segment' | 'name',
         value: string
     ) => {
         const newList = [...prices];
         newList[index] = { ...newList[index], [field]: value };
+        setPrices(newList);
+    };
+
+    const handleDelete = (index: number) => {
+        const newList = [...prices];
+        newList.splice(index, 1);
         setPrices(newList);
     };
 
@@ -152,6 +158,7 @@ export default function PricesList() {
                                 <th className="px-4 py-3">Наименование работ</th>
                                 <th className="px-4 py-3 w-32">Ед. изм.</th>
                                 <th className="px-4 py-3 w-36">Цена</th>
+                                <th className="px-4 py-3 w-12"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -162,7 +169,14 @@ export default function PricesList() {
                                         key={`${p.work_type_id}-${p.segment || index}`}
                                         className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
                                     >
-                                        <td className="px-4 py-3.5 font-medium text-gray-900">{p.name}</td>
+                                        <td className="px-4 py-3.5">
+                                            <input
+                                                type="text"
+                                                value={p.name}
+                                                onChange={(e) => handleInputChange(realIndex, 'name', e.target.value)}
+                                                className="w-full px-3 py-1.5 bg-transparent border border-transparent rounded-lg text-sm font-medium text-gray-900 outline-none hover:border-gray-200 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                                            />
+                                        </td>
                                         <td className="px-4 py-3.5 text-gray-500">{p.unit || '—'}</td>
                                         <td className="px-4 py-3.5">
                                             <input
@@ -173,12 +187,21 @@ export default function PricesList() {
                                                 placeholder="0"
                                             />
                                         </td>
+                                        <td className="px-4 py-3.5">
+                                            <button
+                                                onClick={() => handleDelete(realIndex)}
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                                                title="Удалить"
+                                            >
+                                                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 );
                             })}
                             {filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-12 text-center text-gray-400">
+                                    <td colSpan={4} className="px-4 py-12 text-center text-gray-400">
                                         {filterCategory === 'Все'
                                             ? 'Нет видов работ. Добавьте первый.'
                                             : `Нет работ в категории «${filterCategory}».`}
