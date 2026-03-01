@@ -24,3 +24,4 @@ jobs:
             docker compose up -d
             docker compose restart nginx
             docker image prune -f
+            docker builder prune -f --filter "until=24h"
