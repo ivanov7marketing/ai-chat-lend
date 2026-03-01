@@ -10,8 +10,9 @@ Antigravity's `run_command` tool returns **`CORTEX_STEP_STATUS_CANCELED`** (sile
 
 1. **Wrong Cwd**: `Cwd` points to a subdirectory (e.g. `frontend/`, `backend/`) instead of the workspace root.
 2. **Uppercase drive letter**: `Cwd = C:\dev\ai-chat-lend` (Capital C) — use lowercase `c:` instead.
+3. **Backslashes**: In some cases, `\` in `Cwd` causes silent failures. Use forward slashes `/` instead.
 
-Confirmed on 2026-03-01: even `git status` and `echo "test"` get cancelled with wrong Cwd or uppercase drive.
+Confirmed on 2026-03-01: `c:\...` (backslashes) were cancelled, while `c:/...` (forward slashes) worked.
 
 > **Fallback**: If commands still get cancelled despite correct settings, run them manually in the VS Code terminal (Ctrl+`).
 
@@ -19,14 +20,14 @@ Confirmed on 2026-03-01: even `git status` and `echo "test"` get cancelled with 
 
 // turbo-all
 
-**ALWAYS set `Cwd` to the workspace root directory with a LOWERCASE drive letter (e.g. `c:\`).**
+**ALWAYS set `Cwd` to the workspace root directory with a LOWERCASE drive letter and FORWARD SLASHES (e.g. `c:/`).**
 
 If a command needs to run inside a subdirectory, use `Set-Location` (PowerShell)
 or `Push-Location`/`Pop-Location` with `;` as separator (NOT `&&` — PowerShell
 does not support `&&` in older versions).
 
 ```
-Cwd:         c:\dev\ai-chat-lend                       ← always the root, lowercase 'c'
+Cwd:         c:/dev/ai-chat-lend                       ← always the root, lowercase 'c', forward slashes
 CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 ```
 
@@ -36,19 +37,20 @@ CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 
 | Goal | Cwd | CommandLine |
 |------|-----|-------------|
-| Build frontend | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
-| Install backend deps | `c:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
-| Git status | `c:\dev\ai-chat-lend` | `git status` |
-| Run dev server | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
-| Run tests in backend | `c:\dev\ai-chat-lend` | `Set-Location backend; npm test` |
-| Docker compose | `c:\dev\ai-chat-lend` | `docker compose up -d` |
+| Build frontend | `c:/dev/ai-chat-lend` | `Set-Location frontend; npm run build` |
+| Install backend deps | `c:/dev/ai-chat-lend` | `Set-Location backend; npm install` |
+| Git status | `c:/dev/ai-chat-lend` | `git status` |
+| Run dev server | `c:/dev/ai-chat-lend` | `Set-Location frontend; npm run dev` |
+| Run tests in backend | `c:/dev/ai-chat-lend` | `Set-Location backend; npm test` |
+| Docker compose | `c:/dev/ai-chat-lend` | `docker compose up -d` |
 
 ### ❌ Wrong
 
 | Goal | Cwd | Why it fails |
 |------|-----|--------------|
-| Build frontend | `c:\dev\ai-chat-lend\frontend` | Cwd is a subdirectory — command gets cancelled |
-| Anything | `c:\dev\ai-chat-lend\backend` | Same issue |
+| Build frontend | `c:/dev/ai-chat-lend/frontend` | Cwd is a subdirectory — command gets cancelled |
+| Anything | `c:/dev/ai-chat-lend/backend` | Same issue |
+| Backslashes | `c:\dev\ai-chat-lend` | Use `/` to avoid silent cancellation |
 | Using `&&` | any | PowerShell does not support `&&` — use `;` instead |
 
 ## Key Points
