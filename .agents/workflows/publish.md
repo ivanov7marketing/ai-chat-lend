@@ -25,6 +25,6 @@ git push
 ```
 
 ## Key Rules from AGENTS.md
-- **Cwd**: Always project root with CAPITAL drive letter (`C:\dev\ai-chat-lend`).
+- **Cwd**: Always project root with **lowercase** drive letter (`c:\dev\ai-chat-lend`).
 - **Separator**: Use `;` (NOT `&&`).
 - **Automatic Deploy**: Pushing to `main` triggers GitHub Actions.

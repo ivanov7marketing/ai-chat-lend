@@ -6,12 +6,14 @@ description: How to run terminal commands correctly (Cwd bug workaround)
 
 ## Problem
 
-Antigravity's `run_command` tool **silently cancels commands** when the `Cwd`
-parameter points to a subdirectory of the workspace (e.g. `frontend/`, `backend/`).
-Only the workspace root works reliably as `Cwd`.
+Antigravity's `run_command` tool returns **`CORTEX_STEP_STATUS_CANCELED`** (silently cancels commands) in two known cases:
 
-This was confirmed on 2026-03-01: even `echo "test"` fails when
-`Cwd = C:\dev\ai-chat-lend` (Capital C) but works fine with `c:\` (lowercase).
+1. **Wrong Cwd**: `Cwd` points to a subdirectory (e.g. `frontend/`, `backend/`) instead of the workspace root.
+2. **Uppercase drive letter**: `Cwd = C:\dev\ai-chat-lend` (Capital C) — use lowercase `c:` instead.
+
+Confirmed on 2026-03-01: even `git status` and `echo "test"` get cancelled with wrong Cwd or uppercase drive.
+
+> **Fallback**: If commands still get cancelled despite correct settings, run them manually in the VS Code terminal (Ctrl+`).
 
 ## Rule
 
@@ -35,11 +37,11 @@ CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 | Goal | Cwd | CommandLine |
 |------|-----|-------------|
 | Build frontend | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
-| Install backend deps | `C:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
-| Git status | `C:\dev\ai-chat-lend` | `git status` |
-| Run dev server | `C:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
-| Run tests in backend | `C:\dev\ai-chat-lend` | `Set-Location backend; npm test` |
-| Docker compose | `C:\dev\ai-chat-lend` | `docker compose up -d` |
+| Install backend deps | `c:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
+| Git status | `c:\dev\ai-chat-lend` | `git status` |
+| Run dev server | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
+| Run tests in backend | `c:\dev\ai-chat-lend` | `Set-Location backend; npm test` |
+| Docker compose | `c:\dev\ai-chat-lend` | `docker compose up -d` |
 
 ### ❌ Wrong
 
