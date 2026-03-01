@@ -16,7 +16,7 @@ Set-Location frontend; npm run build
 
 ## 2. Commit and Push
 Use the correct commit format: `feat:`, `fix:`, `chore:`, or `docs:`.
-**CRITICAL**: Always use `Cwd: C:\dev\ai-chat-lend` (CAPITAL 'C').
+**CRITICAL**: Always use `Cwd: c:\dev\ai-chat-lend` (LOWERCASE 'c').
 
 ```powershell
 git add .

@@ -162,11 +162,10 @@ dialog_labels (
 2. rooms — количество комнат (buttons)
 3. condition — состояние квартиры (buttons)
 4. repairType — тип ремонта: Косметический / Капитальный (buttons)
-5. replanning — перепланировка (buttons) — ПРОПУСКАЕТСЯ если repairType = Косметический
-6. design — дизайн-проект (buttons) — ПРОПУСКАЕТСЯ если repairType = Косметический
-7. ceilingHeight — высота потолков (buttons)
-8. wallMaterial — материал стен дома (buttons)
-9. blueprint — наличие чертежа (buttons)
+5. design — дизайн-проект (buttons) — ПРОПУСКАЕТСЯ если repairType = Косметический
+6. ceilingHeight — высота потолков (buttons)
+7. wallMaterial — материал стен дома (buttons)
+8. blueprint — наличие чертежа (buttons)
 
 Логика пропуска шагов: поле skipIf в FunnelStep.
 Шаг пропускается если answers[skipIf.stepId] === skipIf.value.

@@ -10,21 +10,21 @@ Antigravity's `run_command` tool **silently cancels commands** when the `Cwd`
 parameter points to a subdirectory of the workspace (e.g. `frontend/`, `backend/`).
 Only the workspace root works reliably as `Cwd`.
 
-This was confirmed on 2026-02-26: even `echo "test"` fails when
-`Cwd = c:\dev\ai-chat-lend\frontend`, but works fine from the root.
+This was confirmed on 2026-03-01: even `echo "test"` fails when
+`Cwd = C:\dev\ai-chat-lend` (Capital C) but works fine with `c:\` (lowercase).
 
 ## Rule
 
 // turbo-all
 
-**ALWAYS set `Cwd` to the workspace root directory with a CAPITAL drive letter (e.g. `C:\`).**
+**ALWAYS set `Cwd` to the workspace root directory with a LOWERCASE drive letter (e.g. `c:\`).**
 
 If a command needs to run inside a subdirectory, use `Set-Location` (PowerShell)
 or `Push-Location`/`Pop-Location` with `;` as separator (NOT `&&` — PowerShell
 does not support `&&` in older versions).
 
 ```
-Cwd:         C:\dev\ai-chat-lend                       ← always the root, CAPITAL 'C'
+Cwd:         c:\dev\ai-chat-lend                       ← always the root, lowercase 'c'
 CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 ```
 
@@ -34,7 +34,7 @@ CommandLine: Set-Location frontend; npm run build       ← cd inline via ;
 
 | Goal | Cwd | CommandLine |
 |------|-----|-------------|
-| Build frontend | `C:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
+| Build frontend | `c:\dev\ai-chat-lend` | `Set-Location frontend; npm run build` |
 | Install backend deps | `C:\dev\ai-chat-lend` | `Set-Location backend; npm install` |
 | Git status | `C:\dev\ai-chat-lend` | `git status` |
 | Run dev server | `C:\dev\ai-chat-lend` | `Set-Location frontend; npm run dev` |
