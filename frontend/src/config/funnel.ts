@@ -32,13 +32,6 @@ export const FUNNEL_STEPS: FunnelStep[] = [
         options: ['Косметический', 'Капитальный'],
     },
     {
-        id: 'replanning',
-        question: 'Планируется перепланировка?',
-        type: 'buttons',
-        options: ['Нет', 'Снос / возведение стен', 'Объединение санузла'],
-        skipIf: { stepId: 'repairType', value: 'Косметический' },
-    },
-    {
         id: 'design',
         question: 'Нужен дизайн-проект?',
         type: 'buttons',

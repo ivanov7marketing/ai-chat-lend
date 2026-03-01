@@ -33,7 +33,6 @@ export interface FunnelAnswers {
   rooms?: string
   condition?: string
   repairType?: string
-  replanning?: string
   design?: string
   ceilingHeight?: string
   wallMaterial?: string
