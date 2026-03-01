@@ -33,7 +33,11 @@ export default function ChatWindow() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages, isTyping])
 
-    const currentStep = FUNNEL_STEPS[currentFunnelStep]
+    const funnelSteps = (tenantConfig?.funnelSteps && Array.isArray(tenantConfig.funnelSteps) && tenantConfig.funnelSteps.length > 0)
+        ? tenantConfig.funnelSteps
+        : FUNNEL_STEPS
+
+    const currentStep = funnelSteps[currentFunnelStep]
 
     const lastMessage = messages[messages.length - 1]
     const lastMessageRole = lastMessage?.role
@@ -128,7 +132,7 @@ export default function ChatWindow() {
                 {/* Progress */}
                 <ProgressBar
                     currentStep={currentFunnelStep}
-                    totalSteps={FUNNEL_STEPS.length}
+                    totalSteps={funnelSteps.length}
                     visible={chatState === 'FUNNEL'}
                 />
 
