@@ -161,10 +161,10 @@ export default function PricesList() {
                     <table className="w-full text-sm text-left">
                         <thead>
                             <tr className="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                <th className="px-4 py-3">Наименование работ</th>
-                                <th className="px-4 py-3 w-32">Ед. изм.</th>
-                                <th className="px-4 py-3 w-36">Цена</th>
-                                <th className="px-4 py-3 w-12"></th>
+                                <th className="px-4 py-2">Наименование работ</th>
+                                <th className="px-4 py-2 w-32">Ед. изм.</th>
+                                <th className="px-4 py-2 w-36">Цена</th>
+                                <th className="px-4 py-2 w-12"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -175,25 +175,25 @@ export default function PricesList() {
                                         key={`${p.work_type_id}-${p.segment || index}`}
                                         className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
                                     >
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-2">
                                             <input
                                                 type="text"
                                                 value={p.name}
                                                 onChange={(e) => handleInputChange(realIndex, 'name', e.target.value)}
-                                                className="w-full px-3 py-1.5 bg-transparent border border-transparent rounded-lg text-sm font-medium text-gray-900 outline-none hover:border-gray-200 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                                                className="w-full px-3 py-1 bg-transparent border border-transparent rounded-lg text-sm font-medium text-gray-900 outline-none hover:border-gray-200 focus:border-primary-500 focus:bg-white transition-all duration-200"
                                             />
                                         </td>
-                                        <td className="px-4 py-3.5 text-gray-500">{p.unit || '—'}</td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-2 text-gray-500">{p.unit || '—'}</td>
+                                        <td className="px-4 py-2">
                                             <input
                                                 type="number"
                                                 value={p.price_min || ''}
                                                 onChange={(e) => handleInputChange(realIndex, 'price_min', e.target.value)}
-                                                className="w-28 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                className="w-28 px-3 py-1 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
                                                 placeholder="0"
                                             />
                                         </td>
-                                        <td className="px-4 py-3.5">
+                                        <td className="px-4 py-2">
                                             <button
                                                 onClick={() => handleDelete(p.work_type_id)}
                                                 className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
