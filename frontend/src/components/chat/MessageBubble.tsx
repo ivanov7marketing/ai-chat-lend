@@ -28,10 +28,26 @@ const MarkdownContent = ({ content }: { content: string }) => {
                 p: ({ children }) => <span className="block mb-2 last:mb-0 leading-relaxed">{children}</span>,
                 strong: ({ children }) => <strong className="font-bold text-black">{children}</strong>,
                 a: ({ href, children }) => {
-                    const isTel = href?.startsWith('tel:')
+                    // Extract text content from children
+                    const textContent = typeof children === 'string'
+                        ? children
+                        : Array.isArray(children)
+                            ? children.map(c => (typeof c === 'string' ? c : '')).join('')
+                            : ''
+                    // Check if href or text content looks like a phone number
+                    const phoneInText = /(\+?7|8)[\s-]?\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}/.test(textContent)
+                    const isTel = href?.startsWith('tel:') || phoneInText
+
+                    let finalHref = href
+                    if (phoneInText && !href?.startsWith('tel:')) {
+                        // Extract digits from the text and build a tel: link
+                        const clean = textContent.replace(/[^\d+]/g, '').replace(/^8/, '+7')
+                        finalHref = `tel:${clean.startsWith('+') ? clean : '+' + clean}`
+                    }
+
                     return (
                         <a
-                            href={href}
+                            href={finalHref}
                             target={isTel ? undefined : "_blank"}
                             rel={isTel ? undefined : "noopener noreferrer"}
                             className="text-primary-600 font-medium underline hover:text-primary-700 decoration-primary-300 underline-offset-4"
