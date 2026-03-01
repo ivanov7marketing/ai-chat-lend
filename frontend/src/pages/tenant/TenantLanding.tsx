@@ -37,7 +37,6 @@ function TenantLandingContent() {
                     (b: any) => `${b.emoji} ${b.text}`
                 ) || [],
                 segments: tenant.segments || [],
-                funnelSteps: tenant.bot.funnelSteps || null,
                 isWhiteLabel: tenant.bot.isWhiteLabel,
                 integrations: tenant.integrations,
             })

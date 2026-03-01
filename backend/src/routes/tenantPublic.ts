@@ -79,7 +79,6 @@ export async function tenantPublicRoutes(fastify: FastifyInstance) {
                 language: bot.language || 'ru',
                 welcomeMessage: bot.welcome_message || '',
                 quickButtons: bot.quick_buttons || [],
-                funnelSteps: bot.funnel_steps || null,
             },
             segments: segments.map((s: any) => ({
                 name: s.name,

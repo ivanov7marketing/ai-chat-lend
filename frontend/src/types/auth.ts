@@ -58,7 +58,6 @@ export interface TenantBotConfig {
     language: 'ru' | 'en'
     welcomeMessage: string
     quickButtons: TenantQuickButton[]
-    funnelSteps?: any[] | null
     isWhiteLabel?: boolean
 }
 

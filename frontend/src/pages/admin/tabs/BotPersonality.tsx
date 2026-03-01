@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getBotPersonality, updateBotPersonality, uploadFile } from '../../../services/adminApi';
 import type { BotPersonality as BotPersonalityType } from '../../../types/admin';
-import { Save, X, Upload, Trash2, Camera } from 'lucide-react';
+import { Save, Upload, Trash2, Camera } from 'lucide-react';
 
 export default function BotPersonality() {
     const [data, setData] = useState<BotPersonalityType | null>(null);
@@ -138,129 +138,6 @@ export default function BotPersonality() {
                 <p className="text-xs text-gray-400 mt-2">Поддерживает Markdown-разметку</p>
             </section>
 
-
-            {/* Dynamic Funnel Editor */}
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Воронка опроса</h2>
-                        <p className="text-sm text-gray-500">Настройте вопросы, которые бот задает при расчете сметы</p>
-                    </div>
-                    {(!data.funnelSteps || data.funnelSteps.length === 0) && (
-                        <button
-                            onClick={() => {
-                                import('../../../config/funnel').then(m => {
-                                    setData({ ...data, funnelSteps: m.FUNNEL_STEPS });
-                                });
-                            }}
-                            className="text-sm text-primary-600 hover:underline font-medium"
-                        >
-                            Загрузить стандартную воронку
-                        </button>
-                    )}
-                </div>
-                <div className="space-y-4">
-                    {data.funnelSteps?.map((step: any, index: number) => (
-                        <div key={step.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Шаг {index + 1}</span>
-                                    <input
-                                        type="text"
-                                        value={step.id}
-                                        onChange={(e) => {
-                                            const newSteps = [...(data.funnelSteps || [])];
-                                            newSteps[index] = { ...step, id: e.target.value };
-                                            setData({ ...data, funnelSteps: newSteps });
-                                        }}
-                                        className="px-2 py-0.5 bg-white border border-gray-100 rounded text-[10px] font-mono focus:border-primary-500 outline-none w-24"
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        const newSteps = data.funnelSteps?.filter((_, i) => i !== index);
-                                        setData({ ...data, funnelSteps: newSteps });
-                                    }}
-                                    className="text-gray-400 hover:text-red-500"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <input
-                                type="text"
-                                value={step.question}
-                                onChange={(e) => {
-                                    const newSteps = [...(data.funnelSteps || [])];
-                                    newSteps[index] = { ...step, question: e.target.value };
-                                    setData({ ...data, funnelSteps: newSteps });
-                                }}
-                                className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
-                                placeholder="Вопрос бота"
-                            />
-                            <div className="flex flex-wrap gap-3">
-                                <select
-                                    value={step.type}
-                                    onChange={(e) => {
-                                        const newSteps = [...(data.funnelSteps || [])];
-                                        newSteps[index] = { ...step, type: e.target.value };
-                                        setData({ ...data, funnelSteps: newSteps });
-                                    }}
-                                    className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500"
-                                >
-                                    <option value="text-input">Текст / Число</option>
-                                    <option value="buttons">Кнопки (выбор)</option>
-                                </select>
-                                {step.type === 'buttons' && (
-                                    <input
-                                        type="text"
-                                        value={step.options?.join(', ')}
-                                        onChange={(e) => {
-                                            const newSteps = [...(data.funnelSteps || [])];
-                                            newSteps[index] = { ...step, options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) };
-                                            setData({ ...data, funnelSteps: newSteps });
-                                        }}
-                                        className="flex-1 min-w-[200px] px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm"
-                                        placeholder="Опции через запятую (напр: Да, Нет)"
-                                    />
-                                )}
-                            </div>
-                            {/* Simple Logic: skipIf */}
-                            <div className="flex items-center gap-2 pt-1 border-t border-gray-100/50">
-                                <span className="text-[10px] text-gray-400 uppercase">Логика:</span>
-                                <input
-                                    type="text"
-                                    placeholder="Пропустить если (stepId=value)"
-                                    value={step.skipIf ? `${step.skipIf.stepId}=${step.skipIf.value}` : ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        const newSteps = [...(data.funnelSteps || [])];
-                                        if (val.includes('=')) {
-                                            const [sid, v] = val.split('=');
-                                            newSteps[index] = { ...step, skipIf: { stepId: sid.trim(), value: v.trim() } };
-                                        } else if (!val) {
-                                            const { skipIf, ...rest } = step;
-                                            newSteps[index] = rest;
-                                        }
-                                        setData({ ...data, funnelSteps: newSteps });
-                                    }}
-                                    className="flex-1 bg-transparent text-[11px] text-gray-500 italic outline-none"
-                                />
-                            </div>
-                        </div>
-                    ))}
-                    <button
-                        onClick={() => {
-                            const newId = prompt('ID шага (например, rooms):');
-                            if (!newId) return;
-                            const newStep = { id: newId, question: '', type: 'text' };
-                            setData({ ...data, funnelSteps: [...(data.funnelSteps || []), newStep] });
-                        }}
-                        className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-primary-300 hover:bg-primary-50 transition-all"
-                    >
-                        + Добавить шаг воронки
-                    </button>
-                </div>
-            </section>
 
             {/* Save */}
             <div className="flex justify-end">

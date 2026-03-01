@@ -94,7 +94,6 @@ export interface BotPersonality {
     language: 'ru' | 'en';
     welcomeMessage: string;
     quickButtons: QuickButton[];
-    funnelSteps?: any[] | null;
     isWhiteLabel?: boolean;
 }
 
