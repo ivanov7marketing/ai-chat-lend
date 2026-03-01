@@ -3,7 +3,7 @@ import { getPrices, updatePrices, addWorkType } from '../../services/adminApi';
 import type { PriceRecord } from '../../types/admin';
 import { Save, Plus, X, Filter } from 'lucide-react';
 
-const CATEGORIES = ['Все', 'Подготовительные', 'Демонтаж', 'Черновая сантехника', 'Черновая электрика', 'Черновые отделочные', 'Чистовые отделочные', 'Чистовая сантехника', 'Чистовая электрика', 'Прочие', 'Накладные расходы'];
+const CATEGORIES = ['Все', 'Подготовительные работы', 'Демонтажные работы', 'Черновая сантехника', 'Черновая электрика', 'Черновые отделочные', 'Чистовые отделочные', 'Чистовая сантехника', 'Чистовая электрика', 'Прочие', 'Накладные расходы'];
 const SEGMENTS = ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'];
 
 export default function PricesList() {
@@ -12,7 +12,7 @@ export default function PricesList() {
     const [saving, setSaving] = useState(false);
     const [filterCategory, setFilterCategory] = useState('Все');
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Подготовительные' });
+    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Подготовительные работы' });
     const [newPrices, setNewPrices] = useState<Record<string, { min: string; max: string }>>(
         Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }]))
     );
@@ -75,7 +75,7 @@ export default function PricesList() {
         });
 
         setShowAddModal(false);
-        setNewWork({ name: '', unit: 'м²', category: 'Подготовительные' });
+        setNewWork({ name: '', unit: 'м²', category: 'Подготовительные работы' });
         setNewPrices(Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }])));
         await fetchPrices();
     };
