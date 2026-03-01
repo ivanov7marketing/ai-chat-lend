@@ -604,6 +604,14 @@ export async function addWorkType(
     }
 }
 
+export async function deleteWorkType(tenantId: string, workTypeId: number) {
+    const res = await pool.query(
+        `DELETE FROM work_types WHERE id = $1 AND tenant_id = $2 RETURNING id`,
+        [workTypeId, tenantId]
+    )
+    return res.rows.length > 0
+}
+
 // ============================================================
 // Branding (tenant_branding)
 // ============================================================

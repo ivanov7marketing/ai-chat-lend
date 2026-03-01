@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPrices, updatePrices, addWorkType } from '../../services/adminApi';
+import { getPrices, updatePrices, addWorkType, deleteWorkType } from '../../services/adminApi';
 import type { PriceRecord } from '../../types/admin';
 import { Save, Plus, X, Filter, Trash2 } from 'lucide-react';
 
@@ -60,10 +60,16 @@ export default function PricesList() {
         setPrices(newList);
     };
 
-    const handleDelete = (index: number) => {
-        const newList = [...prices];
-        newList.splice(index, 1);
-        setPrices(newList);
+    const handleDelete = async (workTypeId: number) => {
+        if (!window.confirm('Вы уверены, что хотите удалить этот вид работ?')) return;
+
+        try {
+            await deleteWorkType(workTypeId);
+            await fetchPrices();
+        } catch (err) {
+            console.error('Failed to delete work type:', err);
+            alert('Ошибка при удалении');
+        }
     };
 
     const handleAddWorkType = async () => {
@@ -189,7 +195,7 @@ export default function PricesList() {
                                         </td>
                                         <td className="px-4 py-3.5">
                                             <button
-                                                onClick={() => handleDelete(realIndex)}
+                                                onClick={() => handleDelete(p.work_type_id)}
                                                 className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
                                                 title="Удалить"
                                             >

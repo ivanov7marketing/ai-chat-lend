@@ -5,7 +5,7 @@ import {
     getSegments, updateSegment,
     getBotBehavior, updateBotBehavior,
     getIntegrations, updateIntegration, testIntegration,
-    getDashboardMetrics, updateDialogRating, addWorkType,
+    getDashboardMetrics, updateDialogRating, addWorkType, deleteWorkType,
     getBranding, updateBranding,
     getTeamMembers, addTeamMember, updateTeamMember, removeTeamMember,
     getBilling, updateDomain, verifyTenantDomain,
@@ -172,7 +172,6 @@ export async function adminRoutes(fastify: FastifyInstance) {
         await updatePrices(body, tenantId)
         return reply.send({ success: true })
     })
-
     fastify.post('/api/t/:slug/admin/prices', {
         preHandler: [tenantResolver, tenantGuard],
     }, async (req: FastifyRequest, reply: FastifyReply) => {
@@ -183,6 +182,15 @@ export async function adminRoutes(fastify: FastifyInstance) {
         }
         const result = await addWorkType(tenantId, body)
         return reply.send(result)
+    })
+
+    fastify.delete('/api/t/:slug/admin/prices/:workTypeId', {
+        preHandler: [tenantResolver, tenantGuard],
+    }, async (req: FastifyRequest, reply: FastifyReply) => {
+        const tenantId = getTenantId(req)
+        const { workTypeId } = req.params as { workTypeId: string }
+        const success = await deleteWorkType(tenantId, Number(workTypeId))
+        return reply.send({ success })
     })
 
     // ---------- Bot Personality ----------

@@ -146,6 +146,14 @@ export async function addWorkType(
     });
 }
 
+export async function deleteWorkType(
+    workTypeId: number
+): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>(`${getAdminBase()}/prices/${workTypeId}`, {
+        method: 'DELETE',
+    });
+}
+
 // ============ Bot Personality ============
 
 export async function getBotPersonality(): Promise<BotPersonality> {
