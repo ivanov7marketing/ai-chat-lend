@@ -80,12 +80,12 @@ export async function getPrices(tenantId?: string | null) {
     const params: any[] = tenantId ? [tenantId] : []
 
     const res = await pool.query(
-        `SELECT wt.id AS work_type_id, wt.name, wt.unit, wt.category,
+        `SELECT wt.id AS work_type_id, wt.name, wt.unit, wt.category, wt.subcategory,
                 pm.segment, pm.price_min, pm.price_max
          FROM work_types wt
          LEFT JOIN price_matrix pm ON pm.work_type_id = wt.id
          ${where}
-         ORDER BY wt.category, wt.name, pm.segment`,
+         ORDER BY wt.category, wt.subcategory, wt.name, pm.segment`,
         params
     )
     return res.rows

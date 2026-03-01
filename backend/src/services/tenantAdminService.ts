@@ -571,6 +571,7 @@ export async function addWorkType(
         name: string
         unit: string
         category: string
+        subcategory?: string
         prices: { segment: string; priceMin: number; priceMax: number }[]
     }
 ) {
@@ -579,10 +580,10 @@ export async function addWorkType(
         await client.query('BEGIN')
 
         const wtRes = await client.query(
-            `INSERT INTO work_types (name, unit, category, tenant_id)
-             VALUES ($1, $2, $3, $4)
+            `INSERT INTO work_types (name, unit, category, subcategory, tenant_id)
+             VALUES ($1, $2, $3, $4, $5)
              RETURNING id`,
-            [data.name, data.unit, data.category, tenantId]
+            [data.name, data.unit, data.category, data.subcategory || null, tenantId]
         )
         const workTypeId = wtRes.rows[0].id
 

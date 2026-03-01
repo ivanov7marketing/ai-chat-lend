@@ -69,6 +69,7 @@ export interface PriceRecord {
     name: string;
     unit: string | null;
     category: string | null;
+    subcategory: string | null;
     segment: string | null;
     price_min: string | null;
     price_max: string | null;
@@ -78,6 +79,7 @@ export interface NewWorkType {
     name: string;
     unit: string;
     category: string;
+    subcategory?: string;
     prices: {
         segment: string;
         priceMin: number;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getPrices, updatePrices, addWorkType, deleteWorkType } from '../../services/adminApi';
 import type { PriceRecord } from '../../types/admin';
 import { Save, Plus, X, Filter, Trash2 } from 'lucide-react';
@@ -12,7 +12,7 @@ export default function PricesList() {
     const [saving, setSaving] = useState(false);
     const [filterCategory, setFilterCategory] = useState('Все');
     const [showAddModal, setShowAddModal] = useState(false);
-    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Подготовительные работы' });
+    const [newWork, setNewWork] = useState({ name: '', unit: 'м²', category: 'Подготовительные работы', subcategory: '' });
     const [newPrices, setNewPrices] = useState<Record<string, { min: string; max: string }>>(
         Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }]))
     );
@@ -83,11 +83,12 @@ export default function PricesList() {
             name: newWork.name,
             unit: newWork.unit,
             category: newWork.category,
+            subcategory: newWork.subcategory,
             prices: pricesData,
         });
 
         setShowAddModal(false);
-        setNewWork({ name: '', unit: 'м²', category: 'Подготовительные работы' });
+        setNewWork({ name: '', unit: 'м²', category: 'Подготовительные работы', subcategory: '' });
         setNewPrices(Object.fromEntries(SEGMENTS.map((s) => [s, { min: '', max: '' }])));
         await fetchPrices();
     };
@@ -168,43 +169,57 @@ export default function PricesList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((p, index) => {
-                                const realIndex = prices.indexOf(p);
-                                return (
-                                    <tr
-                                        key={`${p.work_type_id}-${p.segment || index}`}
-                                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
-                                    >
-                                        <td className="px-4 py-2">
-                                            <input
-                                                type="text"
-                                                value={p.name}
-                                                onChange={(e) => handleInputChange(realIndex, 'name', e.target.value)}
-                                                className="w-full px-3 py-1 bg-transparent border border-transparent rounded-lg text-sm font-medium text-gray-900 outline-none hover:border-gray-200 focus:border-primary-500 focus:bg-white transition-all duration-200"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2 text-gray-500">{p.unit || '—'}</td>
-                                        <td className="px-4 py-2">
-                                            <input
-                                                type="number"
-                                                value={p.price_min || ''}
-                                                onChange={(e) => handleInputChange(realIndex, 'price_min', e.target.value)}
-                                                className="w-28 px-3 py-1 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
-                                                placeholder="0"
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <button
-                                                onClick={() => handleDelete(p.work_type_id)}
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
-                                                title="Удалить"
+                            {(() => {
+                                let lastSubcategory: string | null = null;
+                                return filtered.map((p, index) => {
+                                    const realIndex = prices.indexOf(p);
+                                    const showSubheader = p.subcategory && p.subcategory !== lastSubcategory;
+                                    lastSubcategory = p.subcategory;
+
+                                    return (
+                                        <React.Fragment key={`${p.work_type_id}-${p.segment || index}`}>
+                                            {showSubheader && (
+                                                <tr className="bg-gray-50/50">
+                                                    <td colSpan={4} className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-y border-gray-100">
+                                                        {p.subcategory}
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            <tr
+                                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150"
                                             >
-                                                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                                                <td className="px-4 py-2">
+                                                    <input
+                                                        type="text"
+                                                        value={p.name}
+                                                        onChange={(e) => handleInputChange(realIndex, 'name', e.target.value)}
+                                                        className="w-full px-3 py-1 bg-transparent border border-transparent rounded-lg text-sm font-medium text-gray-900 outline-none hover:border-gray-200 focus:border-primary-500 focus:bg-white transition-all duration-200"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-2 text-gray-500">{p.unit || '—'}</td>
+                                                <td className="px-4 py-2">
+                                                    <input
+                                                        type="number"
+                                                        value={p.price_min || ''}
+                                                        onChange={(e) => handleInputChange(realIndex, 'price_min', e.target.value)}
+                                                        className="w-28 px-3 py-1 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-primary-500 transition-all duration-200"
+                                                        placeholder="0"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    <button
+                                                        onClick={() => handleDelete(p.work_type_id)}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
+                                                        title="Удалить"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </React.Fragment>
+                                    );
+                                });
+                            })()}
                             {filtered.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="px-4 py-12 text-center text-gray-400">
@@ -270,6 +285,17 @@ export default function PricesList() {
                                         ))}
                                     </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Подкатегория</label>
+                                <input
+                                    type="text"
+                                    value={newWork.subcategory}
+                                    onChange={(e) => setNewWork({ ...newWork, subcategory: e.target.value })}
+                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-50 transition-all duration-200"
+                                    placeholder="Например: ПОТОЛКИ"
+                                />
                             </div>
 
                             <div>

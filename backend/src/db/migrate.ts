@@ -48,7 +48,8 @@ export async function runMigrations() {
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       unit TEXT,
-      category TEXT
+      category TEXT,
+      subcategory TEXT
     );
 
     CREATE TABLE IF NOT EXISTS price_matrix (
@@ -363,6 +364,13 @@ export async function runMigrations() {
       ) THEN
         ALTER TABLE tenant_branding ADD COLUMN contact_phone VARCHAR(20);
         ALTER TABLE tenant_branding ADD COLUMN office_address TEXT;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'work_types' AND column_name = 'subcategory'
+      ) THEN
+        ALTER TABLE work_types ADD COLUMN subcategory TEXT;
       END IF;
     END $$;
   `)
