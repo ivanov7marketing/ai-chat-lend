@@ -16,7 +16,13 @@ const CATEGORIES_ORDER = [
     'Накладные расходы',
 ];
 
-const SEGMENTS = ['Эконом', 'Стандарт', 'Комфорт', 'Премиум'];
+
+/* Custom subcategory display order (items not listed sort alphabetically after) */
+const SUBCATEGORY_ORDER: Record<string, string[]> = {
+    'Демонтажные работы': ['Потолки', 'Стены', 'Полы', 'Сантехника', 'Электрика'],
+    'Черновые отделочные работы': ['Стены', 'Пол', 'Потолок'],
+    'Чистовые отделочные работы': ['Стены', 'Пол', 'Потолок'],
+};
 
 /* ─── Types ─── */
 interface GroupedCategory {
@@ -54,6 +60,22 @@ function groupByCategories(records: PriceRecord[]): GroupedCategory[] {
             name,
             items,
         }));
+
+        // Sort subcategories: null first, then by custom order, then alphabetically
+        const order = SUBCATEGORY_ORDER[category];
+        subcategories.sort((a, b) => {
+            if (a.name === null) return -1;
+            if (b.name === null) return 1;
+            if (order) {
+                const ia = order.indexOf(a.name);
+                const ib = order.indexOf(b.name);
+                const oa = ia === -1 ? 999 : ia;
+                const ob = ib === -1 ? 999 : ib;
+                if (oa !== ob) return oa - ob;
+            }
+            return (a.name || '').localeCompare(b.name || '', 'ru');
+        });
+
         const totalCount = subcategories.reduce((sum, s) => sum + s.items.length, 0);
         return { category, subcategories, totalCount };
     });
@@ -160,11 +182,10 @@ export default function PricesList() {
     };
 
     const handleAddWorkType = async () => {
-        const pricesData = SEGMENTS.map((s) => ({
-            segment: s,
-            priceMin: Number(newPrice) || 0,
-            priceMax: Number(newPrice) || 0,
-        })).filter((p) => p.priceMin > 0 || p.priceMax > 0);
+        const price = Number(newPrice) || 0;
+        const pricesData = price > 0
+            ? [{ segment: 'Стандарт', priceMin: price, priceMax: price }]
+            : [];
 
         await addWorkType({
             name: newWork.name,
